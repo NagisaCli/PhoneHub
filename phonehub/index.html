@@ -1,0 +1,959 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>PhoneHub - 极速文件中心与手机控制台</title>
+  <style>
+    :root {
+      --bg: #090d16;
+      --card-bg: rgba(20, 29, 47, 0.78);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --sidebar-bg: #0c1322;
+      --accent: #38bdf8;
+      --accent-hover: #0ea5e9;
+      --success: #10b981;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+      --purple: #8b5cf6;
+      --text: #f8fafc;
+      --text-muted: #94a3b8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 16px; }
+    .container { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+    
+    /* Top Header & Compact Status */
+    header {
+      background: var(--card-bg); backdrop-filter: blur(14px); border: 1px solid var(--card-border);
+      padding: 12px 20px; border-radius: 12px; display: flex; justify-content: space-between;
+      align-items: center; flex-wrap: wrap; gap: 12px;
+    }
+    .brand { display: flex; align-items: center; gap: 12px; }
+    .brand-icon { width: 38px; height: 38px; background: linear-gradient(135deg, #0284c7, #8b5cf6); border-radius: 9px; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: bold; }
+    .brand-title { font-size: 18px; font-weight: 700; display: flex; align-items: center; gap: 8px; }
+    .brand-subtitle { font-size: 12px; color: var(--text-muted); }
+
+    .header-badges { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 6px; padding: 5px 11px;
+      border-radius: 8px; font-size: 12px; font-weight: 500; background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+    .status-badge strong { color: #fff; }
+
+    /* Action Buttons */
+    .btn-group { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+    button {
+      background: #1e293b; color: #fff; border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 7px 13px; border-radius: 7px; font-size: 12px; font-weight: 500;
+      cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 5px;
+    }
+    button:hover { background: #334155; transform: translateY(-1px); }
+    button:active { transform: translateY(0); }
+    button.btn-primary { background: linear-gradient(135deg, #0284c7, #2563eb); border: none; }
+    button.btn-primary:hover { background: linear-gradient(135deg, #0369a1, #1d4ed8); }
+    button.btn-special { background: linear-gradient(135deg, #7c3aed, #4f46e5); border: none; font-weight: 600; }
+    button.btn-special:hover { background: linear-gradient(135deg, #6d28d9, #4338ca); }
+    button.btn-extreme { background: linear-gradient(135deg, #ec4899, #8b5cf6); border: none; font-weight: 600; }
+    button.btn-extreme:hover { background: linear-gradient(135deg, #db2777, #7c3aed); }
+    button.btn-success { background: #059669; border: none; }
+    button.btn-success:hover { background: #047857; }
+    button.btn-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
+    button.btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
+
+    /* Section Card */
+    .section-card {
+      background: var(--card-bg); backdrop-filter: blur(14px); border: 1px solid var(--card-border);
+      border-radius: 12px; padding: 16px 18px; display: flex; flex-direction: column; gap: 12px;
+    }
+    .section-title { font-size: 14px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
+
+    /* File Explorer Layout */
+    .fm-layout {
+      display: grid; grid-template-columns: 240px 1fr; gap: 14px;
+      min-height: 560px;
+    }
+    @media (max-width: 860px) {
+      .fm-layout { grid-template-columns: 1fr; }
+    }
+
+    /* Sidebar Bookmarks */
+    .fm-sidebar {
+      background: var(--sidebar-bg); border: 1px solid var(--card-border); border-radius: 12px;
+      padding: 14px 10px; display: flex; flex-direction: column; gap: 6px;
+    }
+    .fm-sidebar-title { font-size: 11px; font-weight: 600; color: var(--text-muted); padding: 4px 8px; text-transform: uppercase; }
+    .bookmark-item {
+      display: flex; align-items: center; gap: 9px; padding: 9px 12px; border-radius: 8px;
+      font-size: 13px; color: #cbd5e1; cursor: pointer; transition: all 0.15s ease;
+    }
+    .bookmark-item:hover { background: rgba(255, 255, 255, 0.05); color: #fff; }
+    .bookmark-item.active { background: rgba(56, 189, 248, 0.15); color: #38bdf8; font-weight: 600; }
+    .bookmark-icon { font-size: 16px; }
+
+    /* File Manager Main Panel */
+    .fm-main {
+      background: var(--card-bg); backdrop-filter: blur(14px); border: 1px solid var(--card-border);
+      border-radius: 12px; padding: 14px; display: flex; flex-direction: column; gap: 12px;
+    }
+
+    /* Breadcrumbs & Navigation Bar */
+    .fm-nav-bar {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      background: #0c1322; border: 1px solid var(--card-border); border-radius: 9px; padding: 6px 10px;
+    }
+    .nav-btn { padding: 5px 9px; font-size: 12px; background: rgba(255,255,255,0.06); border-radius: 6px; }
+    .breadcrumb-trail {
+      display: flex; align-items: center; gap: 4px; flex: 1; overflow-x: auto;
+      font-size: 13px; white-space: nowrap; padding: 2px 4px;
+    }
+    .crumb {
+      cursor: pointer; color: var(--text-muted); padding: 2px 6px; border-radius: 4px;
+    }
+    .crumb:hover { color: #fff; background: rgba(255, 255, 255, 0.06); }
+    .crumb.current { color: #38bdf8; font-weight: 600; }
+    .crumb-sep { color: rgba(255, 255, 255, 0.2); }
+
+    /* Search & Filter Bar */
+    .fm-filter-bar {
+      display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 10px;
+    }
+    .search-box { display: flex; align-items: center; gap: 8px; flex: 1; max-width: 320px; }
+    input[type="text"] {
+      width: 100%; background: #0b0f19; border: 1px solid var(--card-border); color: #fff;
+      padding: 7px 11px; border-radius: 7px; font-size: 12px; outline: none; transition: border-color 0.2s;
+    }
+    input[type="text"]:focus { border-color: var(--accent); }
+
+    /* Drop Zone Banner */
+    .drop-banner {
+      border: 2px dashed rgba(255, 255, 255, 0.12); border-radius: 8px; padding: 12px;
+      text-align: center; color: var(--text-muted); cursor: pointer; transition: all 0.2s ease;
+      font-size: 12px; display: flex; align-items: center; justify-content: center; gap: 8px;
+    }
+    .drop-banner:hover, .drop-banner.dragover { border-color: var(--accent); background: rgba(56, 189, 248, 0.06); color: var(--text); }
+    .drop-banner input[type="file"] { display: none; }
+
+    /* File Table */
+    .file-table-container {
+      flex: 1; max-height: 520px; overflow-y: auto; border: 1px solid var(--card-border);
+      border-radius: 8px; background: rgba(11, 15, 25, 0.5);
+    }
+    table { width: 100%; border-collapse: collapse; text-align: left; font-size: 12px; }
+    th {
+      background: #111a2c; padding: 10px 12px; color: var(--text-muted); font-weight: 600;
+      position: sticky; top: 0; z-index: 2; border-bottom: 1px solid var(--card-border);
+    }
+    td { padding: 9px 12px; border-bottom: 1px solid rgba(255, 255, 255, 0.03); }
+    tr:hover { background: rgba(255, 255, 255, 0.025); }
+    .file-name-cell { display: flex; align-items: center; gap: 9px; cursor: pointer; }
+    .file-name-cell:hover .file-title { color: #38bdf8; }
+    .file-title { font-weight: 500; color: #e2e8f0; transition: color 0.15s; }
+    .file-icon { font-size: 16px; width: 20px; text-align: center; }
+
+    /* Bottom Columns: SMS & Tools */
+    .bottom-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
+    @media (max-width: 960px) { .bottom-grid { grid-template-columns: 1fr; } }
+
+    /* SMS List */
+    .sms-box {
+      max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 7px;
+      border: 1px solid var(--card-border); border-radius: 8px; padding: 9px; background: #0a0f1c;
+    }
+    .sms-row {
+      background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05);
+      border-radius: 7px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; font-size: 12px;
+    }
+
+    /* Modal Image Lightbox */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
+      display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0;
+      pointer-events: none; transition: opacity 0.2s ease;
+    }
+    .modal-overlay.active { opacity: 1; pointer-events: auto; }
+    .modal-content {
+      background: #111a2d; border: 1px solid var(--card-border); border-radius: 14px;
+      padding: 16px; max-width: 90vw; max-height: 90vh; display: flex; flex-direction: column;
+      gap: 12px; box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+    }
+    .modal-img { max-width: 80vw; max-height: 75vh; object-fit: contain; border-radius: 8px; }
+
+    /* Toast */
+    #toast {
+      position: fixed; bottom: 20px; right: 20px; background: #131c2e; color: #fff;
+      border: 1px solid var(--card-border); padding: 11px 16px; border-radius: 9px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.6); transform: translateY(100px); opacity: 0;
+      transition: all 0.3s ease; z-index: 999; font-size: 13px; display: flex; align-items: center; gap: 8px;
+    }
+    #toast.show { transform: translateY(0); opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <!-- Header & System Status -->
+    <header>
+      <div class="brand">
+        <div class="brand-icon">📁</div>
+        <div>
+          <div class="brand-title">PhoneHub 文件中心 <span style="font-size: 11px; font-weight: normal; color: #38bdf8; background: rgba(56, 189, 248, 0.12); padding: 2px 7px; border-radius: 10px;">Pro 极速版</span></div>
+          <div class="brand-subtitle" id="deviceMeta">正在连接设备...</div>
+        </div>
+      </div>
+
+      <!-- Quick Metrics -->
+      <div class="header-badges">
+        <div class="status-badge">
+          <span>🔋 电量</span>
+          <strong id="battInfo">--%</strong>
+        </div>
+        <div class="status-badge">
+          <span>🌡️ 温度</span>
+          <strong id="battTemp">--°C</strong>
+        </div>
+        <div class="status-badge">
+          <span>💾 存储</span>
+          <strong id="storageInfo">-- 已用</strong>
+        </div>
+        <div class="status-badge">
+          <span>📶 IP</span>
+          <strong id="wifiIp">--</strong>
+        </div>
+      </div>
+
+      <!-- Essential Scrcpy & Power Actions -->
+      <div class="btn-group">
+        <button class="btn-extreme" onclick="triggerAction('scrcpy_144hz')" title="启动原生硬件级 144Hz 低延迟投屏窗口">🚀 144Hz 满血投屏</button>
+        <button class="btn-primary" onclick="triggerAction('scrcpy_dim')" title="极暗微光屏幕防发热，电脑画面正常显示">🌙 天玑微光防发热</button>
+        <button onclick="triggerAction('screen_on')">☀️ 唤醒</button>
+        <button onclick="triggerAction('screen_off')">🌙 熄屏</button>
+        <button class="btn-danger" onclick="triggerAction('scrcpy_stop')">⏹️ 关投屏</button>
+      </div>
+    </header>
+
+    <!-- MAIN SECTION: Complete File Explorer -->
+    <div class="fm-layout">
+      <!-- Left Bookmarks Sidebar -->
+      <div class="fm-sidebar">
+        <div class="fm-sidebar-title">快捷常用目录</div>
+        <div class="bookmark-item active" onclick="navigatePath('/sdcard/Download')">
+          <span class="bookmark-icon">📥</span>
+          <span>下载目录 (Download)</span>
+        </div>
+        <div class="bookmark-item" onclick="navigatePath('/sdcard/DCIM/Camera')">
+          <span class="bookmark-icon">📸</span>
+          <span>相机相片 (Camera)</span>
+        </div>
+        <div class="bookmark-item" onclick="navigatePath('/sdcard/DCIM/Screenshots')">
+          <span class="bookmark-icon">📱</span>
+          <span>手机截图 (Screenshots)</span>
+        </div>
+        <div class="bookmark-item" onclick="navigatePath('/sdcard/Download/WeiXin')">
+          <span class="bookmark-icon">🟢</span>
+          <span>微信接收文件</span>
+        </div>
+        <div class="bookmark-item" onclick="navigatePath('/sdcard/Download/QQ')">
+          <span class="bookmark-icon">🐧</span>
+          <span>QQ 接收文件</span>
+        </div>
+        <div class="bookmark-item" onclick="navigatePath('/sdcard/Music')">
+          <span class="bookmark-icon">🎵</span>
+          <span>音乐与音频</span>
+        </div>
+        <div class="bookmark-item" onclick="navigatePath('/sdcard')">
+          <span class="bookmark-icon">📁</span>
+          <span>手机存储根目录 (/sdcard)</span>
+        </div>
+        <div class="bookmark-item" onclick="navigatePath('/sdcard/Android/data')">
+          <span class="bookmark-icon">⚙️</span>
+          <span>应用数据目录</span>
+        </div>
+      </div>
+
+      <!-- Right Main Explorer Panel -->
+      <div class="fm-main">
+        <!-- Breadcrumbs & Nav Controls -->
+        <div class="fm-nav-bar">
+          <button class="nav-btn" onclick="navigateUp()" id="upBtn" title="返回上一级">⬆️ 上一级</button>
+          <div class="breadcrumb-trail" id="breadcrumbs">
+            <span class="crumb current">/sdcard</span>
+          </div>
+          <button class="nav-btn" onclick="loadDirectory(currentPath)" title="刷新当前目录">🔄 刷新</button>
+          <button class="nav-btn" onclick="showNewFolderPrompt()" title="在当前目录下新建文件夹">📁 新建文件夹</button>
+          <button class="nav-btn btn-primary" onclick="pullLatestPhoto()" title="从手机拉取最新相片/截图到桌面">📸 拉取最新相片</button>
+        </div>
+
+        <!-- Filter & Search Toolbar -->
+        <div class="fm-filter-bar">
+          <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 筛选当前目录文件名..." oninput="filterFiles()">
+          </div>
+          <div style="display:flex; align-items:center; gap:8px; font-size:12px;">
+            <label style="cursor:pointer; display:flex; align-items:center; gap:4px; color:var(--text-muted);">
+              <input type="checkbox" id="showHiddenCheck" onchange="loadDirectory(currentPath)"> 显示隐藏文件
+            </label>
+            <select id="sortSelect" onchange="sortFiles()" style="background:#0b0f19; color:#fff; border:1px solid var(--card-border); border-radius:6px; padding:4px 8px; font-size:12px;">
+              <option value="date_desc">按修改时间 (最新优先)</option>
+              <option value="name_asc">按名称 (A - Z)</option>
+              <option value="size_desc">按文件大小 (从大到小)</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Drag & Drop Upload Area -->
+        <div class="drop-banner" id="dropBanner" onclick="document.getElementById('fileUploadInput').click()">
+          <span>📤</span>
+          <span><strong>拖拽电脑文件至此处</strong>，或点击上传文件到当前目录：<code id="uploadPathHint">/sdcard</code></span>
+          <input type="file" id="fileUploadInput" onchange="uploadSingleFile(this.files[0])">
+        </div>
+
+        <!-- Batch Operations Bar (Hidden by default) -->
+        <div id="batchBar" style="display:none; align-items:center; justify-content:space-between; background:rgba(56, 189, 248, 0.12); border: 1px solid rgba(56, 189, 248, 0.3); border-radius:8px; padding: 7px 14px; font-size:12px;">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span>☑️ 已选中 <strong id="selectedCount" style="color:#38bdf8; font-size:13px;">0</strong> 项</span>
+            <span id="selectedSize" style="color:var(--text-muted); font-size:11px;"></span>
+          </div>
+          <div style="display:flex; gap:8px; align-items:center;">
+            <button class="btn-success" onclick="batchDownload()"><span style="font-size:13px;">⬇️</span> 批量下载到桌面</button>
+            <button class="btn-danger" onclick="batchDelete()"><span style="font-size:13px;">🗑️</span> 批量删除</button>
+            <button onclick="clearSelection()" style="padding:3px 8px; font-size:11px;">✕ 取消选择</button>
+          </div>
+        </div>
+
+        <!-- File Table -->
+        <div class="file-table-container">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 4%; text-align: center;"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)" title="全选 / 取消全选"></th>
+                <th style="width: 48%;">文件 / 文件夹名称</th>
+                <th style="width: 14%;">大小</th>
+                <th style="width: 18%;">最后修改时间</th>
+                <th style="width: 16%; text-align: right;">快捷操作</th>
+              </tr>
+            </thead>
+            <tbody id="fileTableBody">
+              <tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:30px;">正在载入手机文件...</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Utility Grid: SMS/2FA Center & Essential Tools -->
+    <div class="bottom-grid">
+      <!-- SMS & 2FA -->
+      <div class="section-card">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <div class="section-title">💬 短信与 2FA 验证码中心 <span style="font-size: 11px; font-weight: normal; color: #34d399; background: rgba(16, 185, 129, 0.15); padding: 1px 7px; border-radius: 8px;">🔑 自动推送剪贴板</span></div>
+          <button onclick="loadSms()" style="padding:4px 9px; font-size:11px;">🔄 刷新短信</button>
+        </div>
+        <div class="sms-box" id="smsBox">
+          <div style="text-align:center; color:var(--text-muted); padding:15px;">正在同步短信...</div>
+        </div>
+        <!-- Quick SMS Send -->
+        <div style="display:flex; gap:6px;">
+          <input type="text" id="smsNum" placeholder="发件号码 (如 10010)..." style="width: 160px;">
+          <input type="text" id="smsText" placeholder="短信内容，回车发送..." style="flex:1;" onkeydown="if(event.key==='Enter') sendSmsMsg()">
+          <button class="btn-primary" onclick="sendSmsMsg()">发送 ➔</button>
+        </div>
+      </div>
+
+      <!-- Essential Utilities: Clipboard & Deep Clean -->
+      <div class="section-card">
+        <div class="section-title">⚡ 跨屏文字速传 &amp; 系统维护</div>
+        <!-- Clipboard inject -->
+        <div style="display:flex; gap:6px;">
+          <input type="text" id="clipText" placeholder="输入长文本/链接，按回车直接注入手机当前光标..." style="flex:1;" onkeydown="if(event.key==='Enter') sendTextInput()">
+          <button class="btn-primary" onclick="sendTextInput()">注入文字</button>
+          <button class="btn-special" onclick="syncClipboardToPhone()" title="将电脑剪贴板中的内容直接传给手机">📋 电脑剪贴板</button>
+        </div>
+        <!-- Deep clean -->
+        <div style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+          <div style="font-size: 11px; color: var(--text-muted);">手机深度瘦身与性能释放：</div>
+          <div class="btn-group">
+            <button class="btn-primary" onclick="cleanOp('trim_caches')">⚡ 释放系统级缓存 (Trim Caches 1000G)</button>
+            <button class="btn-danger" onclick="cleanOp('kill_background')">🛑 强力清理后台流氓应用</button>
+            <button onclick="cleanOp('debloat_miui_ads')">🚫 停用小米广告全家桶</button>
+          </div>
+          <div id="cleanOutput" style="font-size: 11px; color: #38bdf8; min-height: 14px;"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Image Lightbox Modal -->
+  <div class="modal-overlay" id="imgModal" onclick="closeImageModal()">
+    <div class="modal-content" onclick="event.stopPropagation()">
+      <div style="display:flex; justify-content:space-between; align-items:center;">
+        <span id="modalTitle" style="font-size: 13px; font-weight:600; color:#e2e8f0; text-overflow:ellipsis; overflow:hidden; white-space:nowrap; max-width:60vw;">图片预览</span>
+        <div style="display:flex; gap:8px;">
+          <button class="btn-success" id="modalDownloadBtn">⬇️ 保存到桌面</button>
+          <button onclick="closeImageModal()">✕ 关闭</button>
+        </div>
+      </div>
+      <img class="modal-img" id="modalImg" src="" alt="Preview">
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast">✅ 操作执行成功</div>
+
+  <script>
+    let currentPath = '/sdcard/Download';
+    let currentItems = [];
+
+    function showToast(msg, isErr=false) {
+      const t = document.getElementById('toast');
+      t.innerText = (isErr ? '❌ ' : '✅ ') + msg;
+      t.style.borderColor = isErr ? '#ef4444' : '#10b981';
+      t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2800);
+    }
+
+    // Refresh Device Status
+    async function refreshStatus() {
+      try {
+        const res = await fetch('/api/status');
+        const d = await res.json();
+        if (!d.connected) {
+          document.getElementById('deviceMeta').innerText = '未检测到设备，请检查 USB 连接';
+          return;
+        }
+        document.getElementById('deviceMeta').innerText = `${d.model} (Android ${d.android_version}) | 序列号: ${d.serial}`;
+        document.getElementById('battInfo').innerText = `${d.battery.level}% (${d.battery.charging_type})`;
+        document.getElementById('battTemp').innerText = `${d.battery.temp}°C`;
+        document.getElementById('storageInfo').innerText = `${d.storage.used} / ${d.storage.total} (${d.storage.percent})`;
+        document.getElementById('wifiIp').innerText = d.wifi_ip;
+      } catch (e) {
+        console.error(e);
+      }
+    }
+
+    // Load Directory
+    async function loadDirectory(path) {
+      const showHidden = document.getElementById('showHiddenCheck').checked ? '1' : '0';
+      const tbody = document.getElementById('fileTableBody');
+      tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding:25px;">正在读取目录内容...</td></tr>';
+      try {
+        const res = await fetch(`/api/fs/list?path=${encodeURIComponent(path)}&hidden=${showHidden}`);
+        const d = await res.json();
+        if (!d.success) {
+          tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:#f87171; padding:25px;">无法读取目录: ${d.error || '权限不足'}</td></tr>`;
+          return;
+        }
+        currentPath = d.current_path;
+        currentItems = d.items || [];
+        updateBreadcrumbs(currentPath);
+        document.getElementById('uploadPathHint').innerText = currentPath;
+        document.getElementById('upBtn').disabled = !d.parent_path;
+        document.getElementById('upBtn').dataset.parent = d.parent_path || '';
+        renderFiles(currentItems);
+      } catch (e) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center; color:#f87171; padding:25px;">网络请求失败</td></tr>';
+      }
+    }
+
+    function navigatePath(path) {
+      document.querySelectorAll('.bookmark-item').forEach(b => b.classList.remove('active'));
+      const found = Array.from(document.querySelectorAll('.bookmark-item')).find(b => b.innerText.includes(path.split('/').pop()));
+      if (found) found.classList.add('active');
+      loadDirectory(path);
+    }
+
+    function navigateUp() {
+      const parent = document.getElementById('upBtn').dataset.parent;
+      if (parent) {
+        loadDirectory(parent);
+      }
+    }
+
+    function updateBreadcrumbs(path) {
+      const trail = document.getElementById('breadcrumbs');
+      const parts = path.split('/').filter(p => p);
+      let html = `<span class="crumb" onclick="loadDirectory('/sdcard')">📱 内部存储</span>`;
+      let accum = '';
+      parts.forEach((p, idx) => {
+        accum += '/' + p;
+        const currentTarget = accum;
+        const isLast = idx === parts.length - 1;
+        html += `<span class="crumb-sep">/</span><span class="crumb ${isLast ? 'current' : ''}" onclick="loadDirectory('${currentTarget}')">${p}</span>`;
+      });
+      trail.innerHTML = html;
+    }
+
+    function getFileIcon(isDir, ext) {
+      if (isDir) return '📁';
+      if (['jpg', 'jpeg', 'png', 'webp', 'heic', 'bmp'].includes(ext)) return '🖼️';
+      if (['mp4', 'mkv', 'avi', 'mov', 'flv'].includes(ext)) return '🎬';
+      if (['mp3', 'flac', 'aac', 'wav', 'm4a'].includes(ext)) return '🎵';
+      if (['apk', 'xapk'].includes(ext)) return '📦';
+      if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return '🗜️';
+      if (['pdf'].includes(ext)) return '📕';
+      if (['doc', 'docx'].includes(ext)) return '📘';
+      if (['xls', 'xlsx'].includes(ext)) return '📗';
+      if (['ppt', 'pptx'].includes(ext)) return '📙';
+      if (['txt', 'log', 'md', 'json', 'py', 'sh'].includes(ext)) return '📄';
+      return '📄';
+    }
+
+    function renderFiles(items) {
+      const tbody = document.getElementById('fileTableBody');
+      const selectAll = document.getElementById('selectAllCheckbox');
+      if (selectAll) selectAll.checked = false;
+      updateBatchState();
+
+      if (!items.length) {
+        tbody.innerHTML = '<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding:30px;">当前文件夹为空</td></tr>';
+        return;
+      }
+      tbody.innerHTML = items.map(f => {
+        const isImg = ['jpg', 'jpeg', 'png', 'webp', 'heic'].includes(f.ext);
+        return `
+          <tr>
+            <td style="text-align: center;">
+              <input type="checkbox" class="file-chk" data-path="${f.path}" data-name="${f.name}" data-size="${f.size_bytes}" data-is-dir="${f.is_dir}" onchange="updateBatchState()">
+            </td>
+            <td>
+              <div class="file-name-cell" onclick="${f.is_dir ? `loadDirectory('${f.path}')` : (isImg ? `previewImage('${f.path}')` : '')}">
+                <span class="file-icon">${getFileIcon(f.is_dir, f.ext)}</span>
+                <span class="file-title" title="${f.name}">${f.name}</span>
+              </div>
+            </td>
+            <td style="color:var(--text-muted);">${f.size}</td>
+            <td style="color:var(--text-muted); font-size:11px;">${f.date}</td>
+            <td style="text-align: right; white-space:nowrap;">
+              ${!f.is_dir ? `<button class="btn-success" onclick="downloadFile('${f.path}')" style="padding:2px 7px; font-size:11px;">⬇️ 下载</button>` : `<button onclick="downloadFile('${f.path}')" style="padding:2px 7px; font-size:11px;">⬇️ 打包下</button>`}
+              <button onclick="renameItem('${f.path}', '${f.name}')" style="padding:2px 6px; font-size:11px;">✏️</button>
+              <button class="btn-danger" onclick="deleteItem('${f.path}')" style="padding:2px 6px; font-size:11px;">🗑️</button>
+            </td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function toggleSelectAll(checked) {
+      document.querySelectorAll('.file-chk').forEach(c => c.checked = checked);
+      updateBatchState();
+    }
+
+    function clearSelection() {
+      document.querySelectorAll('.file-chk').forEach(c => c.checked = false);
+      const selectAll = document.getElementById('selectAllCheckbox');
+      if (selectAll) selectAll.checked = false;
+      updateBatchState();
+    }
+
+    function updateBatchState() {
+      const chks = Array.from(document.querySelectorAll('.file-chk:checked'));
+      const count = chks.length;
+      const bar = document.getElementById('batchBar');
+      if (!bar) return;
+      if (count > 0) {
+        bar.style.display = 'flex';
+        document.getElementById('selectedCount').innerText = count;
+        let totalBytes = 0;
+        chks.forEach(c => totalBytes += parseInt(c.dataset.size) || 0);
+        document.getElementById('selectedSize').innerText = totalBytes > 0 ? `(共 ${formatSizeJs(totalBytes)})` : '';
+      } else {
+        bar.style.display = 'none';
+      }
+    }
+
+    function formatSizeJs(b) {
+      if (b < 1024) return b + ' B';
+      if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
+      if (b < 1024 * 1024 * 1024) return (b / (1024 * 1024)).toFixed(1) + ' MB';
+      return (b / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
+    }
+
+    async function batchDownload() {
+      const chks = Array.from(document.querySelectorAll('.file-chk:checked'));
+      if (!chks.length) return;
+      const paths = chks.map(c => c.dataset.path);
+      showToast(`正在批量传输 ${paths.length} 个文件到桌面...`);
+      try {
+        const res = await fetch('/api/fs/batch-pull', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({paths})
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast(`已成功将 ${d.count} 个文件下载到电脑桌面！`);
+          clearSelection();
+        } else {
+          showToast('批量下载失败', true);
+        }
+      } catch (e) {
+        showToast('批量传输网络异常', true);
+      }
+    }
+
+    async function batchDelete() {
+      const chks = Array.from(document.querySelectorAll('.file-chk:checked'));
+      if (!chks.length) return;
+      const paths = chks.map(c => c.dataset.path);
+      if (!confirm(`确定要彻底删除已选中的 ${paths.length} 个项目吗？此操作不可恢复！`)) return;
+      showToast(`正在批量删除 ${paths.length} 个项目...`);
+      try {
+        const res = await fetch('/api/fs/batch-delete', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({paths})
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast(`已成功删除 ${d.count} 个项目！`);
+          clearSelection();
+          loadDirectory(currentPath);
+        } else {
+          showToast('批量删除失败', true);
+        }
+      } catch (e) {
+        showToast('批量删除请求异常', true);
+      }
+    }
+
+    function filterFiles() {
+      const q = document.getElementById('searchInput').value.toLowerCase().trim();
+      if (!q) {
+        renderFiles(currentItems);
+        return;
+      }
+      const filtered = currentItems.filter(f => f.name.toLowerCase().includes(q));
+      renderFiles(filtered);
+    }
+
+    function sortFiles() {
+      const mode = document.getElementById('sortSelect').value;
+      let dirs = currentItems.filter(x => x.is_dir);
+      let files = currentItems.filter(x => !x.is_dir);
+
+      if (mode === 'date_desc') {
+        files.sort((a, b) => b.date.localeCompare(a.date));
+      } else if (mode === 'name_asc') {
+        dirs.sort((a, b) => a.name.localeCompare(b.name));
+        files.sort((a, b) => a.name.localeCompare(b.name));
+      } else if (mode === 'size_desc') {
+        files.sort((a, b) => b.size_bytes - a.size_bytes);
+      }
+      currentItems = [...dirs, ...files];
+      filterFiles();
+    }
+
+    // File Actions: Download, Upload, Delete, Rename, Mkdir
+    async function downloadFile(remotePath) {
+      showToast('正在传输文件到电脑桌面...');
+      try {
+        const res = await fetch('/api/fs/pull', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({path: remotePath})
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast(`已保存到电脑桌面: ${d.local_path}`);
+        } else {
+          showToast(d.error || '下载失败', true);
+        }
+      } catch (e) {
+        showToast('下载请求异常', true);
+      }
+    }
+
+    async function deleteItem(remotePath) {
+      const fname = remotePath.split('/').pop();
+      if (!confirm(`确定要彻底删除 [${fname}] 吗？`)) return;
+      showToast('正在删除...');
+      try {
+        const res = await fetch('/api/fs/delete', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({path: remotePath})
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast('已删除！');
+          loadDirectory(currentPath);
+        } else {
+          showToast(d.error || '删除失败', true);
+        }
+      } catch (e) {
+        showToast('请求异常', true);
+      }
+    }
+
+    async function renameItem(remotePath, oldName) {
+      const newName = prompt('输入新的名称:', oldName);
+      if (!newName || newName === oldName) return;
+      showToast('正在重命名...');
+      try {
+        const res = await fetch('/api/fs/rename', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({path: remotePath, new_name: newName})
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast('重命名成功！');
+          loadDirectory(currentPath);
+        } else {
+          showToast(d.error || '重命名失败', true);
+        }
+      } catch (e) {
+        showToast('请求异常', true);
+      }
+    }
+
+    async function showNewFolderPrompt() {
+      const name = prompt('请输入新建文件夹名称:');
+      if (!name) return;
+      showToast('正在新建文件夹...');
+      try {
+        const res = await fetch('/api/fs/mkdir', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({dir: currentPath, name})
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast('文件夹创建成功！');
+          loadDirectory(currentPath);
+        } else {
+          showToast(d.error || '创建失败', true);
+        }
+      } catch (e) {
+        showToast('请求异常', true);
+      }
+    }
+
+    // Drag and Drop & Upload
+    const dropBanner = document.getElementById('dropBanner');
+    dropBanner.addEventListener('dragover', (e) => { e.preventDefault(); dropBanner.classList.add('dragover'); });
+    dropBanner.addEventListener('dragleave', () => dropBanner.classList.remove('dragover'));
+    dropBanner.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropBanner.classList.remove('dragover');
+      if (e.dataTransfer.files.length) {
+        uploadSingleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    async function uploadSingleFile(file) {
+      if (!file) return;
+      showToast(`正在推送到 ${currentPath}: ${file.name}...`);
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('target_dir', currentPath);
+      try {
+        const res = await fetch('/api/fs/upload', {method: 'POST', body: fd});
+        const d = await res.json();
+        if (d.success) {
+          showToast('上传成功！');
+          loadDirectory(currentPath);
+        } else {
+          showToast('上传失败', true);
+        }
+      } catch (e) {
+        showToast('网络传输异常', true);
+      }
+    }
+
+    async function pullLatestPhoto() {
+      showToast('正在从手机拉取最新相片/截图...');
+      try {
+        const res = await fetch('/api/files/pull-latest', {method: 'POST'});
+        const d = await res.json();
+        if (d.success) {
+          showToast(`已成功保存到电脑桌面: ${d.local_path}`);
+        } else {
+          showToast(d.error || '未找到相片', true);
+        }
+      } catch (e) {
+        showToast('拉取失败', true);
+      }
+    }
+
+    // Image Preview Modal
+    async function previewImage(remotePath) {
+      showToast('正在加载高清图片预览...');
+      try {
+        const res = await fetch(`/api/fs/preview?path=${encodeURIComponent(remotePath)}`);
+        const d = await res.json();
+        if (d.success && d.preview) {
+          document.getElementById('modalImg').src = d.preview;
+          document.getElementById('modalTitle').innerText = remotePath.split('/').pop();
+          document.getElementById('modalDownloadBtn').onclick = () => downloadFile(remotePath);
+          document.getElementById('imgModal').classList.add('active');
+        } else {
+          showToast(d.error || '图片预览失败', true);
+        }
+      } catch (e) {
+        showToast('预览请求异常', true);
+      }
+    }
+
+    function closeImageModal() {
+      document.getElementById('imgModal').classList.remove('active');
+    }
+
+    // SMS & 2FA
+    async function loadSms() {
+      const box = document.getElementById('smsBox');
+      try {
+        const res = await fetch('/api/sms');
+        const d = await res.json();
+        const list = d.sms || [];
+        if (!list.length) {
+          box.innerHTML = '<div style="text-align:center; color:var(--text-muted); padding:15px;">暂无短信记录</div>';
+          return;
+        }
+        box.innerHTML = list.map(s => `
+          <div class="sms-row">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <strong style="color:#38bdf8;">${s.address}</strong>
+              <div style="display:flex; align-items:center; gap:6px;">
+                ${s.code ? `<button onclick="copyCode('${s.code}')" style="padding:2px 8px; font-size:11px; background:#059669; border:none; font-weight:600;">🔑 复制验证码 ${s.code}</button>` : ''}
+                <span style="color:var(--text-muted); font-size:11px;">${s.date}</span>
+              </div>
+            </div>
+            <div style="color:#e2e8f0; line-height:1.4;">${s.body}</div>
+          </div>
+        `).join('');
+      } catch (e) {
+        box.innerHTML = '<div style="text-align:center; color:#f87171; padding:15px;">短信读取失败</div>';
+      }
+    }
+
+    function copyCode(code) {
+      navigator.clipboard.writeText(code);
+      showToast(`验证码 [${code}] 已复制到 Windows 剪贴板！`);
+    }
+
+    async function sendSmsMsg() {
+      const numInput = document.getElementById('smsNum');
+      const bodyInput = document.getElementById('smsText');
+      const number = numInput.value.trim();
+      const body = bodyInput.value.trim();
+      if (!number || !body) {
+        showToast('请输入号码与内容', true);
+        return;
+      }
+      showToast(`正在发送短信至 ${number}...`);
+      try {
+        const res = await fetch('/api/sms/send', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({number, body})
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast('短信已拉起发出！');
+          bodyInput.value = '';
+          setTimeout(loadSms, 2000);
+        } else {
+          showToast('发送失败', true);
+        }
+      } catch (e) {
+        showToast('发送请求异常', true);
+      }
+    }
+
+    // Clipboard & Inputs
+    async function sendTextInput() {
+      const input = document.getElementById('clipText');
+      const text = input.value.trim();
+      if (!text) return;
+      try {
+        const res = await fetch('/api/input', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({text})
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast('文字已注入到手机！');
+          input.value = '';
+        } else {
+          showToast('注入失败', true);
+        }
+      } catch (e) {
+        showToast('网络错误', true);
+      }
+    }
+
+    async function syncClipboardToPhone() {
+      try {
+        const text = await navigator.clipboard.readText();
+        if (!text) {
+          showToast('电脑剪贴板为空', true);
+          return;
+        }
+        showToast(`正在写入手机剪贴板 (${text.length} 字符)...`);
+        const res = await fetch('/api/input', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({text})
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast('电脑剪贴板已写入手机！');
+        } else {
+          showToast('写入失败', true);
+        }
+      } catch (e) {
+        showToast('无法读取剪贴板，请允许浏览器权限', true);
+      }
+    }
+
+    // Scrcpy Actions & Cleans
+    async function triggerAction(action) {
+      try {
+        const res = await fetch('/api/action', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({action})
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast(d.mode ? `已启动: ${d.mode}` : `动作 [${action}] 执行成功`);
+          setTimeout(refreshStatus, 1000);
+        } else {
+          showToast(d.error || '执行失败', true);
+        }
+      } catch (e) {
+        showToast('请求异常', true);
+      }
+    }
+
+    async function cleanOp(type) {
+      showToast('正在执行系统清理优化...');
+      try {
+        const res = await fetch('/api/clean', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({type})
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast(d.output || '清理完成！');
+          document.getElementById('cleanOutput').innerText = `✅ [${new Date().toLocaleTimeString()}] ${d.output}`;
+          setTimeout(refreshStatus, 1000);
+        } else {
+          showToast(d.error || '清理失败', true);
+        }
+      } catch (e) {
+        showToast('网络异常', true);
+      }
+    }
+
+    // Initial Load
+    refreshStatus();
+    loadDirectory('/sdcard/Download');
+    loadSms();
+    setInterval(refreshStatus, 4000);
+  </script>
+</body>
+</html>
