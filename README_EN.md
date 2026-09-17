@@ -39,12 +39,16 @@ Built entirely on the high-speed Android **ADB data pipeline**, PhoneHub require
 
 ---
 
-### ⚡ 2. Silky-Smooth File Transfer Hub
-- **🚀 Full-Window Smart Drag HUD**: Drag single or multiple files from anywhere on PC into the browser window to instantly activate a sleek glassmorphic HUD. Target drop cards let you send straight to "Current Folder", "Downloads (/sdcard/Download)", or "Camera (/sdcard/DCIM/Camera)" with automated multi-task queuing.
-- **📋 Global Clipboard Instant Paste (`Ctrl + V`)**: Press `Ctrl + V` anywhere on the page to instantly detect and transfer clipboard screenshots (`Win + Shift + S`) or copied files to the active phone directory with zero redundant clicks.
-- **📊 Floating Transfer Dock**: Sleek floating drawer at the bottom-right corner displaying active transfer queues, direction indicators (⬆️ PC to Phone / ⬇️ Phone to PC), live neon progress bars, real-time speeds (MB/s), and elapsed times.
+### ⚡ 2. Silky-Smooth Transfer Hub & Direct WeChat/QQ Cross-Screen Share
+- **🟢 Direct Share to WeChat / 🐧 QQ / 📱 System Share Sheet**:
+  - **Full-Window Smart Drag HUD Dispatch**: Drag files from anywhere on PC into the browser window. The glassmorphic HUD provides instant direct-dispatch cards: **"Send to WeChat"**, **"Send to QQ"**, **"System Share Sheet"**, and **"Current Folder"**. Releasing files pushes them to the phone in milliseconds via native ADB, while **automatically waking the screen, bypassing keyguard, and triggering the native WeChat/QQ contact picker**!
+  - **Top Navigation Quick Share**: Dedicated **"🟢 Send to WeChat"** and **"🐧 Send to QQ"** buttons in the navigation bar to pick PC files and dispatch directly to mobile apps.
+  - **On-Device File Direct Share**: Every file in the file explorer now features a **"🔗 Share"** button to pop up instant dispatch options to WeChat, QQ, or the system share sheet.
+- **🚀 Global Clipboard Instant Paste (`Ctrl + V`)**: Press `Ctrl + V` anywhere on the page to instantly detect and transfer clipboard screenshots (`Win + Shift + S`) or copied files to the active phone directory with zero redundant clicks.
+- **📊 Floating Transfer Dock**: Sleek floating drawer at the bottom-right corner displaying active transfer queues, direction indicators (⬆️ PC to Phone / ⬇️ Phone to PC), live neon progress bars, real-time speeds (MB/s), elapsed times, and dynamic "✅ Delivered to WeChat / QQ" confirmations.
 - **📂 Reveal in Windows Explorer**: After pulling files to PC, click **"Show in Explorer"** in the transfer card to automatically highlight the downloaded file in native Windows File Explorer via `explorer.exe /select`!
 - **🌐 Dual-Mode Download Engine**: Choose between instant millisecond ADB desktop save (`⬇️ Desktop`) or native browser HTTP stream download (`🌐 Browser DL`).
+- **🛠️ Resilient ADB Stream Engine**: Completely reworked stream capture handling for ADB push stderr/stdout, eliminating false-positive upload errors and ensuring flawless file landing and media indexing.
 
 ---
 

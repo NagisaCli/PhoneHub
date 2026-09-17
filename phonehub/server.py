@@ -169,10 +169,18 @@ class PhoneHubHandler(BaseHTTPRequestHandler):
                     os.remove(tmp_path)
                 except Exception:
                     pass
+
+                share_to = form.getfirst("share_to", "") if "share_to" in form else ""
+                if share_to and res.get("success") and res.get("remote_path"):
+                    share_res = adb_helper.share_file_to_app(res["remote_path"], share_to)
+                    res["shared"] = share_res.get("success", False)
+                    res["share_app"] = share_res.get("app", share_to)
+
                 self._send_json(res)
             except Exception as e:
                 self._send_error(str(e))
             return
+
 
         # Handle JSON POST
         length = int(self.headers.get("Content-Length", 0))
@@ -295,6 +303,14 @@ class PhoneHubHandler(BaseHTTPRequestHandler):
             else:
                 self._send_error("File not found on disk")
             return
+
+        elif path == "/api/fs/share":
+            remote_path = payload.get("path", "")
+            app = payload.get("app", "chooser")
+            res = adb_helper.share_file_to_app(remote_path, app)
+            self._send_json(res)
+            return
+
 
         self._send_error("Not Found", 404)
 

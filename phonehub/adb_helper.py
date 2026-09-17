@@ -6,6 +6,7 @@ import json
 import base64
 import tempfile
 import subprocess
+import mimetypes
 from pathlib import Path
 
 def find_adb():
@@ -46,7 +47,8 @@ def run_adb(args, timeout=12):
     cmd = [ADB_BIN] + args
     try:
         res = subprocess.run(cmd, capture_output=True, text=True, timeout=timeout, encoding="utf-8", errors="replace")
-        return res.stdout.strip()
+        out = (res.stdout or "") + ("\n" + res.stderr if res.stderr else "")
+        return out.strip()
     except Exception as e:
         return f"ERROR: {e}"
 
@@ -664,9 +666,71 @@ def pull_file_or_dir(remote_path, target_local=None):
 def push_file_to_directory(temp_file_path, remote_dir, original_filename):
     remote_dir = remote_dir.rstrip('/') if remote_dir else '/sdcard/Download'
     remote_target = f"{remote_dir}/{original_filename}"
-    out = run_adb(['push', temp_file_path, remote_target])
-    run_adb(['shell', 'am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', f'file://{remote_target}'])
-    return {'success': 'pushed' in out or '1 file' in out, 'remote_path': remote_target, 'filename': original_filename, 'output': out}
+    res = subprocess.run([ADB_BIN, "push", temp_file_path, remote_target],
+                         capture_output=True, text=True, timeout=60, encoding="utf-8", errors="replace")
+    out = ((res.stdout or "") + "\n" + (res.stderr or "")).strip()
+    ok = res.returncode == 0 or "pushed" in out or "1 file" in out
+    if not ok:
+        chk = run_adb(["shell", f'test -f "{remote_target}" && echo "EXISTS"'])
+        if "EXISTS" in chk:
+            ok = True
+    if ok:
+        run_adb(['shell', 'am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', f'file://{remote_target}'])
+    return {'success': ok, 'remote_path': remote_target, 'filename': original_filename, 'output': out}
+
+def share_file_to_app(remote_path, target_app="chooser"):
+    """
+    Directly shares a remote file on phone to WeChat, QQ, or System Share Sheet.
+    target_app: 'wechat' | 'qq' | 'wework' | 'chooser'
+    """
+    if not remote_path:
+        return {"success": False, "error": "无效的文件路径"}
+
+    # 1. Wake phone and dismiss keyguard
+    run_adb(["shell", "input keyevent 224; wm dismiss-keyguard"])
+
+    # 2. Detect mime type
+    ext = os.path.splitext(remote_path)[1].lower().lstrip(".")
+    mime = mimetypes.guess_type(remote_path)[0]
+    if not mime:
+        if ext in ["jpg", "jpeg", "png", "webp", "gif", "bmp"]:
+            mime = "image/*"
+        elif ext in ["mp4", "mkv", "avi", "mov", "flv"]:
+            mime = "video/*"
+        elif ext in ["mp3", "flac", "aac", "wav", "m4a"]:
+            mime = "audio/*"
+        elif ext == "apk":
+            mime = "application/vnd.android.package-archive"
+        else:
+            mime = "*/*"
+
+    pkg_flags = []
+    if target_app in ["wechat", "mm", "wx"]:
+        pkg_flags = ["-p", "com.tencent.mm"]
+    elif target_app in ["qq"]:
+        pkg_flags = ["-p", "com.tencent.mobileqq"]
+    elif target_app in ["wework"]:
+        pkg_flags = ["-p", "com.tencent.wework"]
+
+    cmd = ["shell", "am", "start", "-a", "android.intent.action.SEND", "-t", mime, "--eu", "android.intent.extra.STREAM", f"file://{remote_path}"] + pkg_flags
+    out = run_adb(cmd)
+
+    app_names = {
+        "wechat": "微信",
+        "qq": "QQ",
+        "wework": "企业微信",
+        "chooser": "系统分享"
+    }
+    app_name = app_names.get(target_app, "系统分享")
+    ok = "Starting: Intent" in out or "Warning: Activity not started" in out or "delivered" in out
+
+    return {
+        "success": ok,
+        "app": app_name,
+        "remote_path": remote_path,
+        "output": out
+    }
+
 
 def delete_remote_item(remote_path):
     safe_disallow = ['/', '/sdcard', '/sdcard/', '/storage', '/storage/emulated/0', '/storage/emulated/0/', '/system', '/data']

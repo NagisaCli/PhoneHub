@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PhoneHub - 极速文件中心与手机控制台 | Ultra-fast File Center & Control Hub</title>
+  <title>PhoneHub - 极速文件中心与跨屏直达 | Ultra-fast File Center & Cross-Device Hub</title>
   <style>
     :root {
       --bg: #090d16;
@@ -16,6 +16,8 @@
       --danger: #ef4444;
       --warning: #f59e0b;
       --purple: #8b5cf6;
+      --wechat: #10b981;
+      --qq: #0284c7;
       --text: #f8fafc;
       --text-muted: #94a3b8;
     }
@@ -61,6 +63,10 @@
     button.btn-success:hover { background: #047857; }
     button.btn-danger { background: rgba(239, 68, 68, 0.15); color: #f87171; border: 1px solid rgba(239, 68, 68, 0.3); }
     button.btn-danger:hover { background: rgba(239, 68, 68, 0.25); }
+    button.btn-wechat { background: rgba(16, 185, 129, 0.15); color: #34d399; border: 1px solid rgba(16, 185, 129, 0.35); font-weight: 600; }
+    button.btn-wechat:hover { background: rgba(16, 185, 129, 0.25); }
+    button.btn-qq { background: rgba(56, 189, 248, 0.15); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.35); font-weight: 600; }
+    button.btn-qq:hover { background: rgba(56, 189, 248, 0.25); }
     button.btn-lang {
       background: rgba(56, 189, 248, 0.12); color: #38bdf8; border: 1px solid rgba(56, 189, 248, 0.3);
       font-weight: 600; padding: 6px 11px;
@@ -171,7 +177,7 @@
       border-radius: 7px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; font-size: 12px;
     }
 
-    /* Modal Image Lightbox */
+    /* Modal Image Lightbox & Share Modal */
     .modal-overlay {
       position: fixed; inset: 0; background: rgba(0, 0, 0, 0.85); backdrop-filter: blur(8px);
       display: flex; align-items: center; justify-content: center; z-index: 1000; opacity: 0;
@@ -194,15 +200,15 @@
     }
     #toast.show { transform: translateY(0); opacity: 1; }
 
-    /* Full-Window Drag & Drop HUD */
+    /* Full-Window Drag HUD Overlay */
     .drag-overlay {
-      position: fixed; inset: 0; background: rgba(9, 13, 22, 0.88); backdrop-filter: blur(14px);
+      position: fixed; inset: 0; background: rgba(9, 13, 22, 0.88); backdrop-filter: blur(16px);
       z-index: 10000; display: flex; align-items: center; justify-content: center;
       opacity: 0; pointer-events: none; transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
     }
     .drag-overlay.active { opacity: 1; pointer-events: auto; }
     .drag-modal {
-      width: 680px; max-width: 92vw; background: rgba(20, 29, 47, 0.96);
+      width: 780px; max-width: 94vw; background: rgba(20, 29, 47, 0.96);
       border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 20px;
       padding: 30px 24px; display: flex; flex-direction: column; align-items: center; gap: 16px;
       box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 50px rgba(56, 189, 248, 0.25);
@@ -212,20 +218,33 @@
     @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-7px); } }
     .drag-title { font-size: 20px; font-weight: 700; color: #fff; }
     .drag-subtitle { font-size: 13px; color: var(--text-muted); margin-top: -6px; }
-    .drag-drop-zones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; margin-top: 10px; }
-    @media (max-width: 680px) { .drag-drop-zones { grid-template-columns: 1fr; } }
+    
+    .drag-drop-zones { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; width: 100%; margin-top: 10px; }
+    @media (max-width: 860px) { .drag-drop-zones { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 520px) { .drag-drop-zones { grid-template-columns: 1fr; } }
+    
     .drop-zone-card {
       background: rgba(255, 255, 255, 0.03); border: 2px dashed rgba(255, 255, 255, 0.16);
-      border-radius: 12px; padding: 18px 12px; display: flex; flex-direction: column;
+      border-radius: 12px; padding: 18px 10px; display: flex; flex-direction: column;
       align-items: center; gap: 6px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer;
     }
     .drop-zone-card:hover, .drop-zone-card.drag-highlight {
       border-color: #38bdf8; background: rgba(56, 189, 248, 0.14);
-      transform: scale(1.03); box-shadow: 0 0 25px rgba(56, 189, 248, 0.35);
+      transform: scale(1.04); box-shadow: 0 0 25px rgba(56, 189, 248, 0.35);
     }
+    .drop-zone-card.zone-wechat:hover, .drop-zone-card.zone-wechat.drag-highlight {
+      border-color: #10b981; background: rgba(16, 185, 129, 0.15); box-shadow: 0 0 25px rgba(16, 185, 129, 0.4);
+    }
+    .drop-zone-card.zone-qq:hover, .drop-zone-card.zone-qq.drag-highlight {
+      border-color: #0ea5e9; background: rgba(14, 165, 233, 0.15); box-shadow: 0 0 25px rgba(14, 165, 233, 0.4);
+    }
+    .drop-zone-card.zone-chooser:hover, .drop-zone-card.zone-chooser.drag-highlight {
+      border-color: #8b5cf6; background: rgba(139, 92, 246, 0.15); box-shadow: 0 0 25px rgba(139, 92, 246, 0.4);
+    }
+    
     .drop-zone-icon { font-size: 28px; }
     .drop-zone-name { font-size: 13px; font-weight: 600; color: #f8fafc; }
-    .drop-zone-path { font-size: 11px; color: var(--accent); word-break: break-all; font-family: monospace; }
+    .drop-zone-path { font-size: 11px; color: var(--text-muted); word-break: break-all; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
 
     /* Floating Silky Transfer Hub Dock */
     #transferHub {
@@ -248,7 +267,7 @@
       50% { box-shadow: 0 0 28px rgba(56, 189, 248, 0.85); }
     }
     .transfer-dock {
-      width: 400px; max-width: 90vw; background: rgba(15, 23, 42, 0.96);
+      width: 420px; max-width: 90vw; background: rgba(15, 23, 42, 0.96);
       backdrop-filter: blur(18px); border: 1px solid var(--card-border);
       border-radius: 14px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
       display: flex; flex-direction: column; overflow: hidden;
@@ -267,7 +286,7 @@
       border-radius: 9px; padding: 9px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 12px;
     }
     .transfer-item-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
-    .transfer-item-title { font-weight: 500; color: #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 210px; }
+    .transfer-item-title { font-weight: 500; color: #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 220px; }
     .transfer-progress-bar {
       width: 100%; height: 5px; background: rgba(255, 255, 255, 0.08); border-radius: 3px; overflow: hidden;
     }
@@ -371,12 +390,15 @@
           <div class="breadcrumb-trail" id="breadcrumbs">
             <span class="crumb current">/sdcard</span>
           </div>
-          <button class="nav-btn btn-special" onclick="document.getElementById('multiUploadInput').click()" data-i18n="btn_quick_send" data-i18n-title="btn_quick_send_title" title="批量选择电脑文件高速投送到手机当前目录">🚀 极速投送</button>
+          <button class="nav-btn btn-wechat" onclick="triggerDirectShare('wechat')" data-i18n="btn_share_wechat" data-i18n-title="btn_share_wechat_title" title="选择电脑文件，一键传送到手机并直接唤起微信发送给好友">🟢 跨屏送微信</button>
+          <button class="nav-btn btn-qq" onclick="triggerDirectShare('qq')" data-i18n="btn_share_qq" data-i18n-title="btn_share_qq_title" title="选择电脑文件，一键传送到手机并直接唤起 QQ 发送给好友">🐧 跨屏送 QQ</button>
+          <button class="nav-btn btn-special" onclick="document.getElementById('multiUploadInput').click()" data-i18n="btn_quick_send" data-i18n-title="btn_quick_send_title" title="批量选择电脑文件高速投送到手机当前目录">🚀 存入手机</button>
           <button class="nav-btn" onclick="pasteFromClipboard()" data-i18n="btn_paste_file" data-i18n-title="btn_paste_file_title" title="将电脑剪贴板中的截图或文件直接存入手机 (支持 Ctrl + V)">📋 剪贴板秒存</button>
           <button class="nav-btn" onclick="loadDirectory(currentPath)" data-i18n="btn_refresh" data-i18n-title="btn_refresh_title" title="刷新当前目录">🔄 刷新</button>
           <button class="nav-btn" onclick="showNewFolderPrompt()" data-i18n="btn_mkdir" data-i18n-title="btn_mkdir_title" title="在当前目录下新建文件夹">📁 新建文件夹</button>
           <button class="nav-btn btn-primary" onclick="pullLatestPhoto()" data-i18n="btn_pull_latest" data-i18n-title="btn_pull_latest_title" title="从手机拉取最新相片/截图到桌面">📸 拉取最新相片</button>
           <input type="file" id="multiUploadInput" multiple style="display:none;" onchange="handleMultipleFiles(this.files, currentPath)">
+          <input type="file" id="directShareInput" multiple style="display:none;" onchange="handleDirectShareInput(this.files)">
         </div>
 
         <!-- Filter & Search Toolbar -->
@@ -424,10 +446,10 @@
             <thead>
               <tr>
                 <th style="width: 4%; text-align: center;"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)" data-i18n-title="th_select_all" title="全选 / 取消全选"></th>
-                <th style="width: 42%;" data-i18n="th_name">文件 / 文件夹名称</th>
+                <th style="width: 38%;" data-i18n="th_name">文件 / 文件夹名称</th>
                 <th style="width: 12%;" data-i18n="th_size">大小</th>
                 <th style="width: 16%;" data-i18n="th_date">最后修改时间</th>
-                <th style="width: 26%; text-align: right;" data-i18n="th_actions">快捷操作</th>
+                <th style="width: 30%; text-align: right;" data-i18n="th_actions">快捷操作</th>
               </tr>
             </thead>
             <tbody id="fileTableBody">
@@ -483,29 +505,48 @@
     </div>
   </div>
 
-  <!-- Full-Window Drag HUD Overlay -->
+  <!-- Full-Window Drag HUD Overlay with App Direct Share -->
   <div id="dragOverlay" class="drag-overlay">
     <div class="drag-modal">
       <div class="drag-icon-pulse">🚀</div>
-      <div class="drag-title" data-i18n="drag_hub_title">释放即可高速传输到手机</div>
-      <div class="drag-subtitle" data-i18n="drag_hub_sub">全域智能吸附 · 支持多文件并发传输与即时媒体库刷新</div>
+      <div class="drag-title" data-i18n="drag_hub_title">跨屏直传 · 释放即可高速送达手机</div>
+      <div class="drag-subtitle" data-i18n="drag_hub_sub">支持直接呼出微信、QQ发送给好友，或存入指定手机目录</div>
       <div class="drag-drop-zones">
+        <div class="drop-zone-card zone-wechat" id="dropToWeChat" data-share="wechat" style="border-color: rgba(16, 185, 129, 0.45);">
+          <div class="drop-zone-icon">🟢</div>
+          <div class="drop-zone-name" data-i18n="drop_zone_wechat">直发微信好友</div>
+          <div class="drop-zone-path" data-i18n="drop_zone_wechat_sub">秒传并唤起微信发送面板</div>
+        </div>
+        <div class="drop-zone-card zone-qq" id="dropToQQ" data-share="qq" style="border-color: rgba(14, 165, 233, 0.45);">
+          <div class="drop-zone-icon">🐧</div>
+          <div class="drop-zone-name" data-i18n="drop_zone_qq">直发 QQ 好友</div>
+          <div class="drop-zone-path" data-i18n="drop_zone_qq_sub">秒传并唤起 QQ 发送面板</div>
+        </div>
+        <div class="drop-zone-card zone-chooser" id="dropToChooser" data-share="chooser" style="border-color: rgba(139, 92, 246, 0.45);">
+          <div class="drop-zone-icon">📱</div>
+          <div class="drop-zone-name" data-i18n="drop_zone_chooser">系统分享面板</div>
+          <div class="drop-zone-path" data-i18n="drop_zone_chooser_sub">钉钉/微信/QQ等任选</div>
+        </div>
         <div class="drop-zone-card" id="dropToCurrent" data-target="current">
           <div class="drop-zone-icon">📂</div>
-          <div class="drop-zone-name" data-i18n="drop_zone_current">当前浏览目录</div>
+          <div class="drop-zone-name" data-i18n="drop_zone_current">存入当前浏览目录</div>
           <div class="drop-zone-path" id="dragCurrentPath">/sdcard/Download</div>
         </div>
-        <div class="drop-zone-card" id="dropToDownload" data-target="/sdcard/Download">
-          <div class="drop-zone-icon">📥</div>
-          <div class="drop-zone-name" data-i18n="bm_download">下载目录 (Download)</div>
-          <div class="drop-zone-path">/sdcard/Download</div>
-        </div>
-        <div class="drop-zone-card" id="dropToCamera" data-target="/sdcard/DCIM/Camera">
-          <div class="drop-zone-icon">📸</div>
-          <div class="drop-zone-name" data-i18n="bm_camera">相机相册 (Camera)</div>
-          <div class="drop-zone-path">/sdcard/DCIM/Camera</div>
-        </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Direct Share Modal for Existing Files -->
+  <div class="modal-overlay" id="shareModal" onclick="closeShareModal()">
+    <div class="modal-content" onclick="event.stopPropagation()" style="max-width: 380px; text-align: center; gap: 14px;">
+      <div style="font-size: 15px; font-weight: 700; color: #fff;" data-i18n="share_modal_title">跨屏直发到手机 App</div>
+      <div style="font-size: 12px; color: #38bdf8; word-break: break-all; padding: 4px 8px; background: rgba(56, 189, 248, 0.08); border-radius: 6px;" id="shareModalFileName">filename.ext</div>
+      <div style="display: flex; flex-direction: column; gap: 9px; width: 100%;">
+        <button class="btn-wechat" onclick="executeShareItem('wechat')" style="padding: 10px; font-size: 13px; font-weight: 600; justify-content: center;">🟢 发送给微信好友 (WeChat)</button>
+        <button class="btn-qq" onclick="executeShareItem('qq')" style="padding: 10px; font-size: 13px; font-weight: 600; justify-content: center;">🐧 发送给 QQ 好友 (QQ)</button>
+        <button class="btn-special" onclick="executeShareItem('chooser')" style="padding: 10px; font-size: 13px; font-weight: 600; justify-content: center;">📱 呼出手机系统分享面板</button>
+      </div>
+      <button onclick="closeShareModal()" style="align-self: center; padding: 5px 16px; margin-top: 4px;" data-i18n="modal_close">✕ 取消</button>
     </div>
   </div>
 
@@ -591,10 +632,14 @@
         btn_mkdir_title: "在当前目录下新建文件夹",
         btn_pull_latest: "📸 拉取最新相片",
         btn_pull_latest_title: "从手机拉取最新相片/截图到桌面",
-        btn_quick_send: "🚀 极速投送",
+        btn_quick_send: "🚀 存入手机",
         btn_quick_send_title: "批量选择电脑文件高速投送到手机当前目录",
         btn_paste_file: "📋 剪贴板秒存",
         btn_paste_file_title: "将电脑剪贴板中的截图或文件直接秒传至手机 (支持快捷键 Ctrl + V)",
+        btn_share_wechat: "🟢 跨屏送微信",
+        btn_share_wechat_title: "选择电脑文件，一键传送到手机并直接唤起微信发送给好友",
+        btn_share_qq: "🐧 跨屏送 QQ",
+        btn_share_qq_title: "选择电脑文件，一键传送到手机并直接唤起 QQ 发送给好友",
 
         // Search & Filter
         search_placeholder: "🔍 筛选当前目录文件名...",
@@ -606,9 +651,15 @@
         // Drop & Drag HUD
         drop_drag: "拖拽电脑文件至此处（支持多选）",
         drop_or: "，或点击上传文件到当前目录：",
-        drag_hub_title: "🚀 释放即可高速传输到手机",
-        drag_hub_sub: "全域智能吸附 · 支持多文件并发传输与即时媒体库刷新",
-        drop_zone_current: "当前浏览目录",
+        drag_hub_title: "跨屏直传 · 释放即可高速送达手机",
+        drag_hub_sub: "支持直接呼出微信、QQ发送给好友，或存入指定手机目录",
+        drop_zone_wechat: "直发微信好友",
+        drop_zone_wechat_sub: "秒传并唤起微信好友选择",
+        drop_zone_qq: "直发 QQ 好友",
+        drop_zone_qq_sub: "秒传并唤起 QQ 好友选择",
+        drop_zone_chooser: "系统分享面板",
+        drop_zone_chooser_sub: "钉钉/微信/QQ等任选",
+        drop_zone_current: "存入当前浏览目录",
 
         // Batch Bar
         batch_selected: "☑️ 已选中",
@@ -630,6 +681,8 @@
         btn_download: "⬇️ 桌面",
         btn_pull_zip: "⬇️ 桌面打包",
         btn_browser_dl: "🌐 浏览器下",
+        btn_file_share: "🔗 分享",
+        btn_file_share_title: "跨屏分享到手机微信、QQ或系统分享面板",
 
         // Transfer Hub
         transfer_hub_title: "⚡ 丝滑互传工作台",
@@ -659,10 +712,11 @@
         btn_kill_bg: "🛑 强力清理后台流氓应用",
         btn_debloat_ads: "🚫 停用小米广告全家桶",
 
-        // Modal
+        // Modals
         modal_preview_title: "图片预览",
         modal_save_desktop: "⬇️ 保存到桌面",
         modal_close: "✕ 关闭",
+        share_modal_title: "跨屏直发到手机 App",
 
         // Toasts & Prompts
         toast_batch_uploading_queue: "已加入传输队列：{n} 个文件 ➔ {dir}",
@@ -670,6 +724,9 @@
         toast_clip_text_filled: "已将剪贴板文字填充至文本注入框！",
         toast_clip_perm_hint: "请按 Ctrl + V 直接粘贴图片或文件！",
         toast_uploaded_item: "文件 [{name}] 已传输完成！",
+        toast_shared_wechat: "🟢 已直达微信！请在手机或投屏中选择接收好友",
+        toast_shared_qq: "🐧 已直达 QQ！请在手机或投屏中选择接收好友",
+        toast_shared_chooser: "📱 已在手机上唤起系统分享面板！",
         toast_batch_downloading: "正在批量传输 {n} 个文件到桌面...",
         toast_batch_download_success: "已成功将 {n} 个文件下载到电脑桌面！",
         toast_batch_download_fail: "批量下载失败",
@@ -758,10 +815,14 @@
         btn_mkdir_title: "Create new folder in current directory",
         btn_pull_latest: "📸 Pull Latest Photo",
         btn_pull_latest_title: "Pull latest photo/screenshot from phone to Desktop",
-        btn_quick_send: "🚀 Quick Send",
+        btn_quick_send: "🚀 Save to Phone",
         btn_quick_send_title: "Select PC files to transfer to active phone directory",
         btn_paste_file: "📋 Paste Clip",
         btn_paste_file_title: "Instantly transfer clipboard screenshot/files to phone (Supports Ctrl + V)",
+        btn_share_wechat: "🟢 Send to WeChat",
+        btn_share_wechat_title: "Pick PC files to send to phone and immediately open WeChat contact picker",
+        btn_share_qq: "🐧 Send to QQ",
+        btn_share_qq_title: "Pick PC files to send to phone and immediately open QQ contact picker",
 
         // Search & Filter
         search_placeholder: "🔍 Filter files in current directory...",
@@ -773,9 +834,15 @@
         // Drop & Drag HUD
         drop_drag: "Drag & drop files here (multi-select supported)",
         drop_or: ", or click to upload to current directory: ",
-        drag_hub_title: "🚀 Drop to Instantly Transfer to Phone",
-        drag_hub_sub: "Smart Drop HUD · Supports Multi-file Concurrency & Instant Media Indexing",
-        drop_zone_current: "Current Directory",
+        drag_hub_title: "Cross-Screen Direct Share · Drop to Dispatch",
+        drag_hub_sub: "Send directly to WeChat/QQ friends, or save to target phone folders",
+        drop_zone_wechat: "Send to WeChat Friends",
+        drop_zone_wechat_sub: "Push to phone & launch WeChat",
+        drop_zone_qq: "Send to QQ Friends",
+        drop_zone_qq_sub: "Push to phone & launch QQ",
+        drop_zone_chooser: "System Share Sheet",
+        drop_zone_chooser_sub: "Pop up Android share menu on phone",
+        drop_zone_current: "Save to Current Folder",
 
         // Batch Bar
         batch_selected: "☑️ Selected",
@@ -797,6 +864,8 @@
         btn_download: "⬇️ Desktop",
         btn_pull_zip: "⬇️ Desktop Zip",
         btn_browser_dl: "🌐 Browser DL",
+        btn_file_share: "🔗 Share",
+        btn_file_share_title: "Share file directly to WeChat, QQ, or System Share",
 
         // Transfer Hub
         transfer_hub_title: "⚡ Transfer Hub",
@@ -826,10 +895,11 @@
         btn_kill_bg: "🛑 Kill Background Apps",
         btn_debloat_ads: "🚫 Disable Pre-installed Ads",
 
-        // Modal
+        // Modals
         modal_preview_title: "Image Preview",
         modal_save_desktop: "⬇️ Save to Desktop",
         modal_close: "✕ Close",
+        share_modal_title: "Direct Share to Phone App",
 
         // Toasts & Prompts
         toast_batch_uploading_queue: "Added {n} files to transfer queue ➔ {dir}",
@@ -837,6 +907,9 @@
         toast_clip_text_filled: "Clipboard text filled into text injection field!",
         toast_clip_perm_hint: "Press Ctrl + V directly to paste image or file!",
         toast_uploaded_item: "File [{name}] transfer completed!",
+        toast_shared_wechat: "🟢 Dispatched to WeChat! Select contact on phone/mirroring",
+        toast_shared_qq: "🐧 Dispatched to QQ! Select contact on phone/mirroring",
+        toast_shared_chooser: "📱 System Share sheet opened on phone screen!",
         toast_batch_downloading: "Transferring {n} files to Desktop...",
         toast_batch_download_success: "Successfully downloaded {n} files to Desktop!",
         toast_batch_download_fail: "Batch download failed",
@@ -1070,6 +1143,7 @@
             <td style="color:var(--text-muted);">${f.size}</td>
             <td style="color:var(--text-muted); font-size:11px;">${f.date}</td>
             <td style="text-align: right; white-space:nowrap;">
+              ${!f.is_dir ? `<button onclick="openShareModal('${f.path}', '${f.name}')" style="padding:2px 7px; font-size:11px; background:rgba(139, 92, 246, 0.2); color:#c4b5fd; border:1px solid rgba(139, 92, 246, 0.35);" title="直接分享到手机微信、QQ或系统分享">${t('btn_file_share')}</button>` : ''}
               ${!f.is_dir ? `<button class="btn-success" onclick="downloadFile('${f.path}')" style="padding:2px 7px; font-size:11px;" title="下载到 Windows 桌面">${t('btn_download')}</button>` : `<button onclick="downloadFile('${f.path}')" style="padding:2px 7px; font-size:11px;" title="打包拉取到桌面">${t('btn_pull_zip')}</button>`}
               ${!f.is_dir ? `<button onclick="browserDownload('${f.path}')" style="padding:2px 6px; font-size:11px;" title="通过浏览器流式下载">${t('btn_browser_dl')}</button>` : ''}
               <button onclick="renameItem('${f.path}', '${f.name}')" style="padding:2px 6px; font-size:11px;">✏️</button>
@@ -1150,7 +1224,7 @@
     }
 
     // ==========================================
-    // ⚡ 丝滑互传核心模块 (SILKY TRANSFER ENGINE)
+    // ⚡ 丝滑互传与跨屏直发核心模块 (TRANSFER ENGINE)
     // ==========================================
     let transferTasks = [];
 
@@ -1192,7 +1266,7 @@
       updateTransferPill();
 
       if (!transferTasks.length) {
-        listEl.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px 10px; font-size:12px;">${t('transfer_hub_idle')}</div>`;
+        listEl.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px 10px; font-size:12px;" data-i18n="transfer_hub_idle">${t('transfer_hub_idle')}</div>`;
         return;
       }
 
@@ -1212,7 +1286,7 @@
                 <span class="transfer-item-title" title="${tTask.name}">${tTask.name}</span>
               </div>
               <div style="font-size:11px; font-weight:600; color:${isDone ? '#10b981' : (isErr ? '#ef4444' : '#38bdf8')};">
-                ${isDone ? '✅ 100%' : (isErr ? '❌ 失败' : `${tTask.progress}%`)}
+                ${isDone ? (tTask.shareTo ? `✅ 已送达${tTask.shareApp || ''}` : '✅ 100%') : (isErr ? '❌ 失败' : `${tTask.progress}%`)}
               </div>
             </div>
             <div class="transfer-progress-bar">
@@ -1220,13 +1294,13 @@
             </div>
             <div class="transfer-item-meta">
               <div>
-                <span>${isUp ? `➔ ${tTask.targetDir.split('/').pop() || '根目录'}` : `➔ 桌面`}</span>
+                <span>${isUp ? (tTask.shareTo ? `➔ 直发${tTask.shareApp || tTask.shareTo}` : `➔ ${tTask.targetDir.split('/').pop() || '根目录'}`) : `➔ 桌面`}</span>
                 <span style="margin-left:6px;">${formatSizeJs(tTask.size)}</span>
               </div>
               <div style="display:flex; align-items:center; gap:6px;">
                 <span>${isDone ? (tTask.elapsed || '') : (tTask.speed || '')}</span>
                 ${isDone && tTask.localPath ? `<button class="btn-primary" onclick="revealInExplorer('${tTask.localPath.replace(/\\/g, '\\\\')}')" style="padding:1px 6px; font-size:10px;">${t('transfer_reveal')}</button>` : ''}
-                ${isDone && isUp ? `<button onclick="locateInPhone('${tTask.targetDir}', '${tTask.name}')" style="padding:1px 6px; font-size:10px;">${t('transfer_locate')}</button>` : ''}
+                ${isDone && isUp && !tTask.shareTo ? `<button onclick="locateInPhone('${tTask.targetDir}', '${tTask.name}')" style="padding:1px 6px; font-size:10px;">${t('transfer_locate')}</button>` : ''}
               </div>
             </div>
           </div>
@@ -1251,8 +1325,8 @@
       renderTransferHub();
     }
 
-    // 1. Add Upload Task
-    function addUploadTask(file, targetDir) {
+    // 1. Add Upload Task with optional direct sharing
+    function addUploadTask(file, targetDir, shareTo='') {
       const taskId = 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
       const task = {
         id: taskId,
@@ -1260,6 +1334,8 @@
         name: file.name,
         size: file.size,
         targetDir: targetDir,
+        shareTo: shareTo,
+        shareApp: shareTo === 'wechat' ? '微信' : (shareTo === 'qq' ? 'QQ' : (shareTo === 'chooser' ? '系统分享' : '')),
         progress: 0,
         speed: '0 KB/s',
         status: 'uploading',
@@ -1274,6 +1350,9 @@
       const fd = new FormData();
       fd.append('file', file);
       fd.append('target_dir', targetDir);
+      if (shareTo) {
+        fd.append('share_to', shareTo);
+      }
 
       let lastTime = Date.now();
       let lastLoaded = 0;
@@ -1303,8 +1382,19 @@
               task.status = 'done';
               task.progress = 100;
               task.elapsed = ((Date.now() - task.startTime) / 1000).toFixed(1) + 's';
+              if (res.share_app) task.shareApp = res.share_app;
               updateTaskUi(task);
-              showToast(t('toast_uploaded_item', {name: file.name}));
+
+              if (shareTo === 'wechat') {
+                showToast(t('toast_shared_wechat'));
+              } else if (shareTo === 'qq') {
+                showToast(t('toast_shared_qq'));
+              } else if (shareTo === 'chooser') {
+                showToast(t('toast_shared_chooser'));
+              } else {
+                showToast(t('toast_uploaded_item', {name: file.name}));
+              }
+
               if (currentPath === targetDir) {
                 loadDirectory(currentPath);
               }
@@ -1336,7 +1426,54 @@
       });
     }
 
-    // 2. Download File (Phone -> PC via ADB directly to Desktop)
+    // Direct Share trigger from Nav Bar
+    let currentDirectShareApp = 'wechat';
+    function triggerDirectShare(app) {
+      currentDirectShareApp = app;
+      document.getElementById('directShareInput').click();
+    }
+
+    function handleDirectShareInput(files) {
+      if (!files || !files.length) return;
+      Array.from(files).forEach(file => {
+        addUploadTask(file, '/sdcard/Download', currentDirectShareApp);
+      });
+    }
+
+    // Direct Share Modal for Existing Files on Phone
+    let activeShareFilePath = '';
+    function openShareModal(remotePath, name) {
+      activeShareFilePath = remotePath;
+      document.getElementById('shareModalFileName').innerText = name;
+      document.getElementById('shareModal').classList.add('active');
+    }
+
+    function closeShareModal() {
+      document.getElementById('shareModal').classList.remove('active');
+    }
+
+    async function executeShareItem(app) {
+      if (!activeShareFilePath) return;
+      closeShareModal();
+      showToast(t(app === 'wechat' ? 'toast_shared_wechat' : (app === 'qq' ? 'toast_shared_qq' : 'toast_shared_chooser')));
+      try {
+        const res = await fetch('/api/fs/share', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({path: activeShareFilePath, app})
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast(`已在手机唤起 ${d.app} 分享！`);
+        } else {
+          showToast(d.error || '分享唤起失败', true);
+        }
+      } catch (e) {
+        showToast(t('toast_network_err'), true);
+      }
+    }
+
+    // Download File (Phone -> PC via ADB directly to Desktop)
     async function downloadFile(remotePath) {
       const fname = remotePath.split('/').pop();
       const taskId = 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
@@ -1382,7 +1519,7 @@
       }
     }
 
-    // 3. Browser Direct Stream Download
+    // Browser Direct Stream Download
     function browserDownload(remotePath) {
       const url = `/api/fs/download?path=${encodeURIComponent(remotePath)}`;
       const a = document.createElement('a');
@@ -1394,7 +1531,7 @@
       showToast(`已发起浏览器下载: ${remotePath.split('/').pop()}`);
     }
 
-    // 4. Reveal in Windows Explorer
+    // Reveal in Windows Explorer
     async function revealInExplorer(localPath) {
       try {
         await fetch('/api/fs/reveal', {
@@ -1408,7 +1545,7 @@
       }
     }
 
-    // 5. Locate in Phone
+    // Locate in Phone
     function locateInPhone(targetDir, fname) {
       navigatePath(targetDir);
     }
@@ -1455,13 +1592,21 @@
 
       const dropZone = e.target.closest('.drop-zone-card');
       let targetDir = currentPath;
+      let shareTo = '';
+
       if (dropZone) {
-        const tVal = dropZone.dataset.target;
-        if (tVal && tVal !== 'current') targetDir = tVal;
+        if (dropZone.dataset.share) {
+          shareTo = dropZone.dataset.share;
+          targetDir = '/sdcard/Download';
+        } else if (dropZone.dataset.target && dropZone.dataset.target !== 'current') {
+          targetDir = dropZone.dataset.target;
+        }
       }
 
       if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
-        handleMultipleFiles(e.dataTransfer.files, targetDir);
+        Array.from(e.dataTransfer.files).forEach(file => {
+          addUploadTask(file, targetDir, shareTo);
+        });
       }
     });
 
