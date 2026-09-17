@@ -678,6 +678,25 @@ def push_file_to_directory(temp_file_path, remote_dir, original_filename):
         run_adb(['shell', 'am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', f'file://{remote_target}'])
     return {'success': ok, 'remote_path': remote_target, 'filename': original_filename, 'output': out}
 
+def get_content_uri(remote_path):
+    """
+    Scans remote file into Android MediaStore and retrieves its content:// URI.
+    """
+    if not remote_path:
+        return None
+    norm_path = remote_path.replace("/sdcard/", "/storage/emulated/0/")
+    run_adb(['shell', 'am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', f'file://{remote_path}'])
+    import time
+    for _ in range(3):
+        out = run_adb(['shell', f"content query --uri content://media/external/file --projection _id:_data --where \"_data='{norm_path}'\""])
+        if "_id=" in out:
+            for part in out.replace("\n", " ").split():
+                if part.startswith("_id="):
+                    mid = part.split("=")[1].strip(", ")
+                    return f"content://media/external/file/{mid}"
+        time.sleep(0.15)
+    return None
+
 def share_file_to_app(remote_path, target_app="chooser"):
     """
     Directly shares a remote file on phone to WeChat, QQ, or System Share Sheet.
@@ -689,30 +708,49 @@ def share_file_to_app(remote_path, target_app="chooser"):
     # 1. Wake phone and dismiss keyguard
     run_adb(["shell", "input keyevent 224; wm dismiss-keyguard"])
 
-    # 2. Detect mime type
+    # 2. Detect mime type (NEVER use unquoted */* to prevent shell globbing)
     ext = os.path.splitext(remote_path)[1].lower().lstrip(".")
     mime = mimetypes.guess_type(remote_path)[0]
     if not mime:
         if ext in ["jpg", "jpeg", "png", "webp", "gif", "bmp"]:
             mime = "image/*"
-        elif ext in ["mp4", "mkv", "avi", "mov", "flv"]:
+        elif ext in ["mp4", "mkv", "avi", "mov", "flv", "wmv"]:
             mime = "video/*"
-        elif ext in ["mp3", "flac", "aac", "wav", "m4a"]:
+        elif ext in ["mp3", "flac", "aac", "wav", "m4a", "ogg"]:
             mime = "audio/*"
-        elif ext == "apk":
+        elif ext in ["apk", "xapk"]:
             mime = "application/vnd.android.package-archive"
+        elif ext == "pdf":
+            mime = "application/pdf"
+        elif ext in ["txt", "log", "md", "json", "py", "c", "cpp", "h", "java", "sh", "xml", "html", "css", "js"]:
+            mime = "text/plain"
+        elif ext in ["zip", "rar", "7z", "tar", "gz"]:
+            mime = "application/zip"
         else:
-            mime = "*/*"
+            mime = "application/octet-stream"
 
-    pkg_flags = []
+    # 3. Resolve MediaStore content URI for Android 11+ / 14 Scoped Storage
+    content_uri = get_content_uri(remote_path)
+    stream_uri = content_uri if content_uri else f"file://{remote_path}"
+
+    target_flags = []
     if target_app in ["wechat", "mm", "wx"]:
-        pkg_flags = ["-p", "com.tencent.mm"]
+        target_flags = ["-n", "com.tencent.mm/.ui.tools.ShareImgUI"]
     elif target_app in ["qq"]:
-        pkg_flags = ["-p", "com.tencent.mobileqq"]
+        target_flags = ["-p", "com.tencent.mobileqq"]
     elif target_app in ["wework"]:
-        pkg_flags = ["-p", "com.tencent.wework"]
+        target_flags = ["-p", "com.tencent.wework"]
 
-    cmd = ["shell", "am", "start", "-a", "android.intent.action.SEND", "-t", mime, "--eu", "android.intent.extra.STREAM", f"file://{remote_path}"] + pkg_flags
+    # 4. Construct intent with FLAG_ACTIVITY_NEW_TASK | FLAG_GRANT_READ_URI_PERMISSION (0x10000001)
+    cmd = [
+        "shell", "am", "start",
+        "-a", "android.intent.action.SEND",
+        "-t", mime,
+        "--eu", "android.intent.extra.STREAM", stream_uri,
+        "--grant-read-uri-permission",
+        "-f", "0x10000001"
+    ] + target_flags
+
     out = run_adb(cmd)
 
     app_names = {
@@ -722,14 +760,18 @@ def share_file_to_app(remote_path, target_app="chooser"):
         "chooser": "系统分享"
     }
     app_name = app_names.get(target_app, "系统分享")
-    ok = "Starting: Intent" in out or "Warning: Activity not started" in out or "delivered" in out
+    has_err = "Error:" in out or "Error type" in out or "Exception" in out
+    ok = not has_err and ("Starting: Intent" in out or "Warning: Activity not started" in out or "delivered" in out)
 
     return {
         "success": ok,
         "app": app_name,
         "remote_path": remote_path,
-        "output": out
+        "content_uri": content_uri,
+        "output": out,
+        "error": out if not ok else ""
     }
+
 
 
 def delete_remote_item(remote_path):
