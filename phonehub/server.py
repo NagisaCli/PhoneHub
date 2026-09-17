@@ -8,6 +8,7 @@ from socketserver import ThreadingMixIn
 import urllib.parse
 import tempfile
 import cgi
+import subprocess
 
 # Ensure current dir in path
 CURRENT_DIR = Path(__file__).parent.resolve()
@@ -89,6 +90,43 @@ class PhoneHubHandler(BaseHTTPRequestHandler):
             remote_path = query.get("path", [""])[0]
             data = adb_helper.get_image_preview_b64(remote_path)
             self._send_json(data)
+            return
+
+        elif path == "/api/fs/download":
+            remote_path = query.get("path", [""])[0]
+            if not remote_path or ".." in remote_path:
+                self._send_error("Invalid path", 400)
+                return
+            fname = os.path.basename(remote_path.rstrip("/"))
+            tmp_dir = tempfile.gettempdir()
+            local_tmp = os.path.join(tmp_dir, f"ph_stream_{os.getpid()}_{fname}")
+            res = adb_helper.pull_file_or_dir(remote_path, target_local=local_tmp)
+            if not res.get("success") or not os.path.exists(local_tmp):
+                self._send_error("Failed to pull file from phone", 500)
+                return
+            try:
+                size = os.path.getsize(local_tmp)
+                mime, _ = mimetypes.guess_type(fname)
+                if not mime:
+                    mime = "application/octet-stream"
+                self.send_response(200)
+                self.send_header("Content-Type", mime)
+                self.send_header("Content-Length", str(size))
+                quoted_fname = urllib.parse.quote(fname)
+                self.send_header("Content-Disposition", f"attachment; filename*=UTF-8''{quoted_fname}")
+                self.send_header("Access-Control-Allow-Origin", "*")
+                self.end_headers()
+                with open(local_tmp, "rb") as f:
+                    while chunk := f.read(64 * 1024):
+                        self.wfile.write(chunk)
+            except Exception:
+                pass
+            finally:
+                try:
+                    if os.path.exists(local_tmp):
+                        os.remove(local_tmp)
+                except Exception:
+                    pass
             return
 
         self._send_error("Not Found", 404)
@@ -244,6 +282,18 @@ class PhoneHubHandler(BaseHTTPRequestHandler):
             number = payload.get("number", "")
             res = adb_helper.dial_phone_number(number)
             self._send_json(res)
+            return
+
+        elif path == "/api/fs/reveal":
+            local_path = payload.get("path", "")
+            if local_path and os.path.exists(local_path):
+                try:
+                    subprocess.Popen(f'explorer.exe /select,"{os.path.abspath(local_path)}"')
+                    self._send_json({"success": True})
+                except Exception as e:
+                    self._send_error(str(e))
+            else:
+                self._send_error("File not found on disk")
             return
 
         self._send_error("Not Found", 404)

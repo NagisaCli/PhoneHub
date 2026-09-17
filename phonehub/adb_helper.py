@@ -666,7 +666,7 @@ def push_file_to_directory(temp_file_path, remote_dir, original_filename):
     remote_target = f"{remote_dir}/{original_filename}"
     out = run_adb(['push', temp_file_path, remote_target])
     run_adb(['shell', 'am', 'broadcast', '-a', 'android.intent.action.MEDIA_SCANNER_SCAN_FILE', '-d', f'file://{remote_target}'])
-    return {'success': 'pushed' in out or '1 file' in out, 'remote_path': remote_target, 'output': out}
+    return {'success': 'pushed' in out or '1 file' in out, 'remote_path': remote_target, 'filename': original_filename, 'output': out}
 
 def delete_remote_item(remote_path):
     safe_disallow = ['/', '/sdcard', '/sdcard/', '/storage', '/storage/emulated/0', '/storage/emulated/0/', '/system', '/data']

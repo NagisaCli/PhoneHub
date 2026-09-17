@@ -20,8 +20,8 @@
       --text-muted: #94a3b8;
     }
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif; }
-    body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 16px; }
-    .container { max-width: 1400px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+    body { background: var(--bg); color: var(--text); min-height: 100vh; padding: 16px; overflow-x: hidden; }
+    .container { max-width: 1440px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
     
     /* Top Header & Compact Status */
     header {
@@ -47,7 +47,7 @@
     button {
       background: #1e293b; color: #fff; border: 1px solid rgba(255, 255, 255, 0.08);
       padding: 7px 13px; border-radius: 7px; font-size: 12px; font-weight: 500;
-      cursor: pointer; transition: all 0.2s ease; display: inline-flex; align-items: center; gap: 5px;
+      cursor: pointer; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); display: inline-flex; align-items: center; gap: 5px;
     }
     button:hover { background: #334155; transform: translateY(-1px); }
     button:active { transform: translateY(0); }
@@ -187,12 +187,95 @@
 
     /* Toast */
     #toast {
-      position: fixed; bottom: 20px; right: 20px; background: #131c2e; color: #fff;
+      position: fixed; bottom: 20px; left: 20px; background: #131c2e; color: #fff;
       border: 1px solid var(--card-border); padding: 11px 16px; border-radius: 9px;
       box-shadow: 0 10px 30px rgba(0,0,0,0.6); transform: translateY(100px); opacity: 0;
-      transition: all 0.3s ease; z-index: 999; font-size: 13px; display: flex; align-items: center; gap: 8px;
+      transition: all 0.3s ease; z-index: 9999; font-size: 13px; display: flex; align-items: center; gap: 8px;
     }
     #toast.show { transform: translateY(0); opacity: 1; }
+
+    /* Full-Window Drag & Drop HUD */
+    .drag-overlay {
+      position: fixed; inset: 0; background: rgba(9, 13, 22, 0.88); backdrop-filter: blur(14px);
+      z-index: 10000; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .drag-overlay.active { opacity: 1; pointer-events: auto; }
+    .drag-modal {
+      width: 680px; max-width: 92vw; background: rgba(20, 29, 47, 0.96);
+      border: 1px solid rgba(56, 189, 248, 0.35); border-radius: 20px;
+      padding: 30px 24px; display: flex; flex-direction: column; align-items: center; gap: 16px;
+      box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9), 0 0 50px rgba(56, 189, 248, 0.25);
+      text-align: center;
+    }
+    .drag-icon-pulse { font-size: 46px; animation: bounce 0.9s infinite alternate; }
+    @keyframes bounce { from { transform: translateY(0); } to { transform: translateY(-7px); } }
+    .drag-title { font-size: 20px; font-weight: 700; color: #fff; }
+    .drag-subtitle { font-size: 13px; color: var(--text-muted); margin-top: -6px; }
+    .drag-drop-zones { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; width: 100%; margin-top: 10px; }
+    @media (max-width: 680px) { .drag-drop-zones { grid-template-columns: 1fr; } }
+    .drop-zone-card {
+      background: rgba(255, 255, 255, 0.03); border: 2px dashed rgba(255, 255, 255, 0.16);
+      border-radius: 12px; padding: 18px 12px; display: flex; flex-direction: column;
+      align-items: center; gap: 6px; transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1); cursor: pointer;
+    }
+    .drop-zone-card:hover, .drop-zone-card.drag-highlight {
+      border-color: #38bdf8; background: rgba(56, 189, 248, 0.14);
+      transform: scale(1.03); box-shadow: 0 0 25px rgba(56, 189, 248, 0.35);
+    }
+    .drop-zone-icon { font-size: 28px; }
+    .drop-zone-name { font-size: 13px; font-weight: 600; color: #f8fafc; }
+    .drop-zone-path { font-size: 11px; color: var(--accent); word-break: break-all; font-family: monospace; }
+
+    /* Floating Silky Transfer Hub Dock */
+    #transferHub {
+      position: fixed; bottom: 20px; right: 20px; z-index: 998;
+      display: flex; flex-direction: column; align-items: flex-end; gap: 8px;
+    }
+    .transfer-pill {
+      background: linear-gradient(135deg, #0284c7, #2563eb);
+      color: #fff; padding: 8px 16px; border-radius: 30px; font-size: 13px; font-weight: 600;
+      cursor: pointer; display: flex; align-items: center; gap: 8px;
+      box-shadow: 0 8px 24px rgba(2, 132, 199, 0.45); border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1); user-select: none;
+    }
+    .transfer-pill:hover { transform: translateY(-2px); box-shadow: 0 12px 28px rgba(2, 132, 199, 0.65); }
+    .transfer-pill.has-active {
+      animation: pulse-glow 2s infinite;
+    }
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 14px rgba(56, 189, 248, 0.5); }
+      50% { box-shadow: 0 0 28px rgba(56, 189, 248, 0.85); }
+    }
+    .transfer-dock {
+      width: 400px; max-width: 90vw; background: rgba(15, 23, 42, 0.96);
+      backdrop-filter: blur(18px); border: 1px solid var(--card-border);
+      border-radius: 14px; box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
+      display: flex; flex-direction: column; overflow: hidden;
+      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    .transfer-dock.collapsed { display: none; }
+    .transfer-header {
+      padding: 11px 16px; background: #0c1322; border-bottom: 1px solid var(--card-border);
+      display: flex; justify-content: space-between; align-items: center; font-size: 13px; font-weight: 600;
+    }
+    .transfer-list {
+      max-height: 290px; overflow-y: auto; display: flex; flex-direction: column; gap: 8px; padding: 12px;
+    }
+    .transfer-item {
+      background: rgba(255, 255, 255, 0.03); border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 9px; padding: 9px 12px; display: flex; flex-direction: column; gap: 6px; font-size: 12px;
+    }
+    .transfer-item-top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+    .transfer-item-title { font-weight: 500; color: #f1f5f9; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 210px; }
+    .transfer-progress-bar {
+      width: 100%; height: 5px; background: rgba(255, 255, 255, 0.08); border-radius: 3px; overflow: hidden;
+    }
+    .transfer-progress-fill {
+      height: 100%; background: linear-gradient(90deg, #38bdf8, #818cf8);
+      border-radius: 3px; width: 0%; transition: width 0.15s ease;
+    }
+    .transfer-item-meta { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--text-muted); }
   </style>
 </head>
 <body>
@@ -288,9 +371,12 @@
           <div class="breadcrumb-trail" id="breadcrumbs">
             <span class="crumb current">/sdcard</span>
           </div>
+          <button class="nav-btn btn-special" onclick="document.getElementById('multiUploadInput').click()" data-i18n="btn_quick_send" data-i18n-title="btn_quick_send_title" title="批量选择电脑文件高速投送到手机当前目录">🚀 极速投送</button>
+          <button class="nav-btn" onclick="pasteFromClipboard()" data-i18n="btn_paste_file" data-i18n-title="btn_paste_file_title" title="将电脑剪贴板中的截图或文件直接存入手机 (支持 Ctrl + V)">📋 剪贴板秒存</button>
           <button class="nav-btn" onclick="loadDirectory(currentPath)" data-i18n="btn_refresh" data-i18n-title="btn_refresh_title" title="刷新当前目录">🔄 刷新</button>
           <button class="nav-btn" onclick="showNewFolderPrompt()" data-i18n="btn_mkdir" data-i18n-title="btn_mkdir_title" title="在当前目录下新建文件夹">📁 新建文件夹</button>
           <button class="nav-btn btn-primary" onclick="pullLatestPhoto()" data-i18n="btn_pull_latest" data-i18n-title="btn_pull_latest_title" title="从手机拉取最新相片/截图到桌面">📸 拉取最新相片</button>
+          <input type="file" id="multiUploadInput" multiple style="display:none;" onchange="handleMultipleFiles(this.files, currentPath)">
         </div>
 
         <!-- Filter & Search Toolbar -->
@@ -312,12 +398,11 @@
         </div>
 
         <!-- Drag & Drop Upload Area -->
-        <div class="drop-banner" id="dropBanner" onclick="document.getElementById('fileUploadInput').click()">
+        <div class="drop-banner" id="dropBanner" onclick="document.getElementById('multiUploadInput').click()">
           <span>📤</span>
           <span>
-            <strong data-i18n="drop_drag">拖拽电脑文件至此处</strong><span data-i18n="drop_or">，或点击上传文件到当前目录：</span><code id="uploadPathHint">/sdcard</code>
+            <strong data-i18n="drop_drag">拖拽电脑文件至此处（支持多选）</strong><span data-i18n="drop_or">，或点击上传文件到当前目录：</span><code id="uploadPathHint">/sdcard</code>
           </span>
-          <input type="file" id="fileUploadInput" onchange="uploadSingleFile(this.files[0])">
         </div>
 
         <!-- Batch Operations Bar (Hidden by default) -->
@@ -339,10 +424,10 @@
             <thead>
               <tr>
                 <th style="width: 4%; text-align: center;"><input type="checkbox" id="selectAllCheckbox" onchange="toggleSelectAll(this.checked)" data-i18n-title="th_select_all" title="全选 / 取消全选"></th>
-                <th style="width: 48%;" data-i18n="th_name">文件 / 文件夹名称</th>
-                <th style="width: 14%;" data-i18n="th_size">大小</th>
-                <th style="width: 18%;" data-i18n="th_date">最后修改时间</th>
-                <th style="width: 16%; text-align: right;" data-i18n="th_actions">快捷操作</th>
+                <th style="width: 42%;" data-i18n="th_name">文件 / 文件夹名称</th>
+                <th style="width: 12%;" data-i18n="th_size">大小</th>
+                <th style="width: 16%;" data-i18n="th_date">最后修改时间</th>
+                <th style="width: 26%; text-align: right;" data-i18n="th_actions">快捷操作</th>
               </tr>
             </thead>
             <tbody id="fileTableBody">
@@ -395,6 +480,56 @@
           <div id="cleanOutput" style="font-size: 11px; color: #38bdf8; min-height: 14px;"></div>
         </div>
       </div>
+    </div>
+  </div>
+
+  <!-- Full-Window Drag HUD Overlay -->
+  <div id="dragOverlay" class="drag-overlay">
+    <div class="drag-modal">
+      <div class="drag-icon-pulse">🚀</div>
+      <div class="drag-title" data-i18n="drag_hub_title">释放即可高速传输到手机</div>
+      <div class="drag-subtitle" data-i18n="drag_hub_sub">全域智能吸附 · 支持多文件并发传输与即时媒体库刷新</div>
+      <div class="drag-drop-zones">
+        <div class="drop-zone-card" id="dropToCurrent" data-target="current">
+          <div class="drop-zone-icon">📂</div>
+          <div class="drop-zone-name" data-i18n="drop_zone_current">当前浏览目录</div>
+          <div class="drop-zone-path" id="dragCurrentPath">/sdcard/Download</div>
+        </div>
+        <div class="drop-zone-card" id="dropToDownload" data-target="/sdcard/Download">
+          <div class="drop-zone-icon">📥</div>
+          <div class="drop-zone-name" data-i18n="bm_download">下载目录 (Download)</div>
+          <div class="drop-zone-path">/sdcard/Download</div>
+        </div>
+        <div class="drop-zone-card" id="dropToCamera" data-target="/sdcard/DCIM/Camera">
+          <div class="drop-zone-icon">📸</div>
+          <div class="drop-zone-name" data-i18n="bm_camera">相机相册 (Camera)</div>
+          <div class="drop-zone-path">/sdcard/DCIM/Camera</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Floating Silky Transfer Hub Dock -->
+  <div id="transferHub">
+    <div class="transfer-dock collapsed" id="transferDock">
+      <div class="transfer-header">
+        <div style="display:flex; align-items:center; gap:6px;">
+          <span>⚡</span>
+          <span data-i18n="transfer_hub_title">丝滑互传工作台</span>
+          <span id="transferActiveBadge" style="font-size:10px; background:rgba(56,189,248,0.2); color:#38bdf8; padding:1px 6px; border-radius:10px; display:none;">0</span>
+        </div>
+        <div style="display:flex; gap:6px; align-items:center;">
+          <button onclick="clearTransferHistory()" style="padding:2px 6px; font-size:11px;" title="清空已完成记录">🗑️</button>
+          <button onclick="toggleTransferDock()" style="padding:2px 6px; font-size:11px;" title="收起面板">✕</button>
+        </div>
+      </div>
+      <div class="transfer-list" id="transferList">
+        <div style="text-align:center; color:var(--text-muted); padding:20px 10px; font-size:12px;" data-i18n="transfer_hub_idle">暂无互传任务，可直接按 Ctrl+V 或拖拽文件</div>
+      </div>
+    </div>
+    <div class="transfer-pill" id="transferPill" onclick="toggleTransferDock()">
+      <span>⚡</span>
+      <span id="transferPillText" data-i18n="transfer_hub_title">丝滑互传工作台</span>
     </div>
   </div>
 
@@ -456,6 +591,10 @@
         btn_mkdir_title: "在当前目录下新建文件夹",
         btn_pull_latest: "📸 拉取最新相片",
         btn_pull_latest_title: "从手机拉取最新相片/截图到桌面",
+        btn_quick_send: "🚀 极速投送",
+        btn_quick_send_title: "批量选择电脑文件高速投送到手机当前目录",
+        btn_paste_file: "📋 剪贴板秒存",
+        btn_paste_file_title: "将电脑剪贴板中的截图或文件直接秒传至手机 (支持快捷键 Ctrl + V)",
 
         // Search & Filter
         search_placeholder: "🔍 筛选当前目录文件名...",
@@ -464,9 +603,12 @@
         sort_name: "按名称 (A - Z)",
         sort_size: "按文件大小 (从大到小)",
 
-        // Drop
-        drop_drag: "拖拽电脑文件至此处",
+        // Drop & Drag HUD
+        drop_drag: "拖拽电脑文件至此处（支持多选）",
         drop_or: "，或点击上传文件到当前目录：",
+        drag_hub_title: "🚀 释放即可高速传输到手机",
+        drag_hub_sub: "全域智能吸附 · 支持多文件并发传输与即时媒体库刷新",
+        drop_zone_current: "当前浏览目录",
 
         // Batch Bar
         batch_selected: "☑️ 已选中",
@@ -485,8 +627,15 @@
         empty_dir: "当前文件夹为空",
         loading_files: "正在载入手机文件...",
         reading_dir: "正在读取目录内容...",
-        btn_download: "⬇️ 下载",
-        btn_pull_zip: "⬇️ 打包下",
+        btn_download: "⬇️ 桌面",
+        btn_pull_zip: "⬇️ 桌面打包",
+        btn_browser_dl: "🌐 浏览器下",
+
+        // Transfer Hub
+        transfer_hub_title: "⚡ 丝滑互传工作台",
+        transfer_hub_idle: "暂无互传任务，可直接按 Ctrl+V 或拖拽文件",
+        transfer_reveal: "📂 电脑中查看",
+        transfer_locate: "📱 手机中定位",
 
         // SMS & 2FA
         sms_title: "💬 短信与 2FA 验证码中心",
@@ -516,6 +665,11 @@
         modal_close: "✕ 关闭",
 
         // Toasts & Prompts
+        toast_batch_uploading_queue: "已加入传输队列：{n} 个文件 ➔ {dir}",
+        toast_clipboard_detected: "📋 已捕获剪贴板图片 [{name}]，正在秒传至手机...",
+        toast_clip_text_filled: "已将剪贴板文字填充至文本注入框！",
+        toast_clip_perm_hint: "请按 Ctrl + V 直接粘贴图片或文件！",
+        toast_uploaded_item: "文件 [{name}] 已传输完成！",
         toast_batch_downloading: "正在批量传输 {n} 个文件到桌面...",
         toast_batch_download_success: "已成功将 {n} 个文件下载到电脑桌面！",
         toast_batch_download_fail: "批量下载失败",
@@ -604,6 +758,10 @@
         btn_mkdir_title: "Create new folder in current directory",
         btn_pull_latest: "📸 Pull Latest Photo",
         btn_pull_latest_title: "Pull latest photo/screenshot from phone to Desktop",
+        btn_quick_send: "🚀 Quick Send",
+        btn_quick_send_title: "Select PC files to transfer to active phone directory",
+        btn_paste_file: "📋 Paste Clip",
+        btn_paste_file_title: "Instantly transfer clipboard screenshot/files to phone (Supports Ctrl + V)",
 
         // Search & Filter
         search_placeholder: "🔍 Filter files in current directory...",
@@ -612,9 +770,12 @@
         sort_name: "Name (A - Z)",
         sort_size: "File Size (Largest first)",
 
-        // Drop
-        drop_drag: "Drag & drop files here",
+        // Drop & Drag HUD
+        drop_drag: "Drag & drop files here (multi-select supported)",
         drop_or: ", or click to upload to current directory: ",
+        drag_hub_title: "🚀 Drop to Instantly Transfer to Phone",
+        drag_hub_sub: "Smart Drop HUD · Supports Multi-file Concurrency & Instant Media Indexing",
+        drop_zone_current: "Current Directory",
 
         // Batch Bar
         batch_selected: "☑️ Selected",
@@ -633,8 +794,15 @@
         empty_dir: "Directory is empty",
         loading_files: "Loading phone files...",
         reading_dir: "Reading directory contents...",
-        btn_download: "⬇️ Download",
-        btn_pull_zip: "⬇️ Pull Folder",
+        btn_download: "⬇️ Desktop",
+        btn_pull_zip: "⬇️ Desktop Zip",
+        btn_browser_dl: "🌐 Browser DL",
+
+        // Transfer Hub
+        transfer_hub_title: "⚡ Transfer Hub",
+        transfer_hub_idle: "No active transfers. Press Ctrl+V or drop files anywhere",
+        transfer_reveal: "📂 Show in Explorer",
+        transfer_locate: "📱 Locate in Phone",
 
         // SMS & 2FA
         sms_title: "💬 SMS & 2FA Code Center",
@@ -664,6 +832,11 @@
         modal_close: "✕ Close",
 
         // Toasts & Prompts
+        toast_batch_uploading_queue: "Added {n} files to transfer queue ➔ {dir}",
+        toast_clipboard_detected: "📋 Clipboard image [{name}] captured, sending to phone...",
+        toast_clip_text_filled: "Clipboard text filled into text injection field!",
+        toast_clip_perm_hint: "Press Ctrl + V directly to paste image or file!",
+        toast_uploaded_item: "File [{name}] transfer completed!",
         toast_batch_downloading: "Transferring {n} files to Desktop...",
         toast_batch_download_success: "Successfully downloaded {n} files to Desktop!",
         toast_batch_download_fail: "Batch download failed",
@@ -765,6 +938,7 @@
       if (currentPath) updateBreadcrumbs(currentPath);
       if (currentItems) renderFiles(currentItems);
       updateBatchState();
+      renderTransferHub();
     }
 
     function toggleLanguage() {
@@ -817,6 +991,8 @@
         currentItems = d.items || [];
         updateBreadcrumbs(currentPath);
         document.getElementById('uploadPathHint').innerText = currentPath;
+        const dragPath = document.getElementById('dragCurrentPath');
+        if (dragPath) dragPath.innerText = currentPath;
         document.getElementById('upBtn').disabled = !d.parent_path;
         document.getElementById('upBtn').dataset.parent = d.parent_path || '';
         renderFiles(currentItems);
@@ -855,16 +1031,16 @@
 
     function getFileIcon(isDir, ext) {
       if (isDir) return '📁';
-      if (['jpg', 'jpeg', 'png', 'webp', 'heic', 'bmp'].includes(ext)) return '🖼️';
-      if (['mp4', 'mkv', 'avi', 'mov', 'flv'].includes(ext)) return '🎬';
-      if (['mp3', 'flac', 'aac', 'wav', 'm4a'].includes(ext)) return '🎵';
+      if (['jpg', 'jpeg', 'png', 'webp', 'heic', 'bmp', 'gif'].includes(ext)) return '🖼️';
+      if (['mp4', 'mkv', 'avi', 'mov', 'flv', 'wmv'].includes(ext)) return '🎬';
+      if (['mp3', 'flac', 'aac', 'wav', 'm4a', 'ogg'].includes(ext)) return '🎵';
       if (['apk', 'xapk'].includes(ext)) return '📦';
       if (['zip', 'rar', '7z', 'tar', 'gz'].includes(ext)) return '🗜️';
       if (['pdf'].includes(ext)) return '📕';
       if (['doc', 'docx'].includes(ext)) return '📘';
       if (['xls', 'xlsx'].includes(ext)) return '📗';
       if (['ppt', 'pptx'].includes(ext)) return '📙';
-      if (['txt', 'log', 'md', 'json', 'py', 'sh'].includes(ext)) return '📄';
+      if (['txt', 'log', 'md', 'json', 'py', 'sh', 'js', 'html', 'css'].includes(ext)) return '📄';
       return '📄';
     }
 
@@ -894,7 +1070,8 @@
             <td style="color:var(--text-muted);">${f.size}</td>
             <td style="color:var(--text-muted); font-size:11px;">${f.date}</td>
             <td style="text-align: right; white-space:nowrap;">
-              ${!f.is_dir ? `<button class="btn-success" onclick="downloadFile('${f.path}')" style="padding:2px 7px; font-size:11px;">${t('btn_download')}</button>` : `<button onclick="downloadFile('${f.path}')" style="padding:2px 7px; font-size:11px;">${t('btn_pull_zip')}</button>`}
+              ${!f.is_dir ? `<button class="btn-success" onclick="downloadFile('${f.path}')" style="padding:2px 7px; font-size:11px;" title="下载到 Windows 桌面">${t('btn_download')}</button>` : `<button onclick="downloadFile('${f.path}')" style="padding:2px 7px; font-size:11px;" title="打包拉取到桌面">${t('btn_pull_zip')}</button>`}
+              ${!f.is_dir ? `<button onclick="browserDownload('${f.path}')" style="padding:2px 6px; font-size:11px;" title="通过浏览器流式下载">${t('btn_browser_dl')}</button>` : ''}
               <button onclick="renameItem('${f.path}', '${f.name}')" style="padding:2px 6px; font-size:11px;">✏️</button>
               <button class="btn-danger" onclick="deleteItem('${f.path}')" style="padding:2px 6px; font-size:11px;">🗑️</button>
             </td>
@@ -932,58 +1109,17 @@
     }
 
     function formatSizeJs(b) {
+      if (!b || isNaN(b)) return '0 B';
       if (b < 1024) return b + ' B';
       if (b < 1024 * 1024) return (b / 1024).toFixed(1) + ' KB';
       if (b < 1024 * 1024 * 1024) return (b / (1024 * 1024)).toFixed(1) + ' MB';
       return (b / (1024 * 1024 * 1024)).toFixed(2) + ' GB';
     }
 
-    async function batchDownload() {
-      const chks = Array.from(document.querySelectorAll('.file-chk:checked'));
-      if (!chks.length) return;
-      const paths = chks.map(c => c.dataset.path);
-      showToast(t('toast_batch_downloading', {n: paths.length}));
-      try {
-        const res = await fetch('/api/fs/batch-pull', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({paths})
-        });
-        const d = await res.json();
-        if (d.success) {
-          showToast(t('toast_batch_download_success', {n: d.count}));
-          clearSelection();
-        } else {
-          showToast(t('toast_batch_download_fail'), true);
-        }
-      } catch (e) {
-        showToast(t('toast_network_err'), true);
-      }
-    }
-
-    async function batchDelete() {
-      const chks = Array.from(document.querySelectorAll('.file-chk:checked'));
-      if (!chks.length) return;
-      const paths = chks.map(c => c.dataset.path);
-      if (!confirm(t('toast_batch_delete_confirm', {n: paths.length}))) return;
-      showToast(t('toast_batch_deleting', {n: paths.length}));
-      try {
-        const res = await fetch('/api/fs/batch-delete', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({paths})
-        });
-        const d = await res.json();
-        if (d.success) {
-          showToast(t('toast_batch_delete_success', {n: d.count}));
-          clearSelection();
-          loadDirectory(currentPath);
-        } else {
-          showToast(t('toast_batch_delete_fail'), true);
-        }
-      } catch (e) {
-        showToast(t('toast_network_err'), true);
-      }
+    function formatSpeed(bps) {
+      if (!bps || isNaN(bps) || bps <= 0) return '0 KB/s';
+      if (bps < 1024 * 1024) return (bps / 1024).toFixed(1) + ' KB/s';
+      return (bps / (1024 * 1024)).toFixed(1) + ' MB/s';
     }
 
     function filterFiles() {
@@ -1013,8 +1149,212 @@
       filterFiles();
     }
 
-    // File Actions: Download, Upload, Delete, Rename, Mkdir
+    // ==========================================
+    // ⚡ 丝滑互传核心模块 (SILKY TRANSFER ENGINE)
+    // ==========================================
+    let transferTasks = [];
+
+    function toggleTransferDock() {
+      const dock = document.getElementById('transferDock');
+      dock.classList.toggle('collapsed');
+    }
+
+    function openTransferDock() {
+      const dock = document.getElementById('transferDock');
+      dock.classList.remove('collapsed');
+    }
+
+    function clearTransferHistory() {
+      transferTasks = transferTasks.filter(t => t.status !== 'done' && t.status !== 'error');
+      renderTransferHub();
+    }
+
+    function updateTransferPill() {
+      const activeCount = transferTasks.filter(t => t.status === 'uploading' || t.status === 'pulling').length;
+      const pill = document.getElementById('transferPill');
+      const badge = document.getElementById('transferActiveBadge');
+      const pillText = document.getElementById('transferPillText');
+
+      if (activeCount > 0) {
+        pill.classList.add('has-active');
+        badge.style.display = 'inline-block';
+        badge.innerText = activeCount;
+        pillText.innerText = `⚡ ${activeCount} 个互传中...`;
+      } else {
+        pill.classList.remove('has-active');
+        badge.style.display = 'none';
+        pillText.innerText = t('transfer_hub_title');
+      }
+    }
+
+    function renderTransferHub() {
+      const listEl = document.getElementById('transferList');
+      updateTransferPill();
+
+      if (!transferTasks.length) {
+        listEl.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:20px 10px; font-size:12px;">${t('transfer_hub_idle')}</div>`;
+        return;
+      }
+
+      listEl.innerHTML = transferTasks.map(tTask => {
+        const isUp = tTask.type === 'upload';
+        const isDone = tTask.status === 'done';
+        const isErr = tTask.status === 'error';
+        const ext = tTask.name.split('.').pop().toLowerCase();
+        const icon = getFileIcon(false, ext);
+
+        return `
+          <div class="transfer-item" id="${tTask.id}">
+            <div class="transfer-item-top">
+              <div style="display:flex; align-items:center; gap:6px; overflow:hidden;">
+                <span>${isUp ? '⬆️' : '⬇️'}</span>
+                <span>${icon}</span>
+                <span class="transfer-item-title" title="${tTask.name}">${tTask.name}</span>
+              </div>
+              <div style="font-size:11px; font-weight:600; color:${isDone ? '#10b981' : (isErr ? '#ef4444' : '#38bdf8')};">
+                ${isDone ? '✅ 100%' : (isErr ? '❌ 失败' : `${tTask.progress}%`)}
+              </div>
+            </div>
+            <div class="transfer-progress-bar">
+              <div class="transfer-progress-fill" style="width: ${tTask.progress}%; background: ${isDone ? '#10b981' : (isErr ? '#ef4444' : '')}"></div>
+            </div>
+            <div class="transfer-item-meta">
+              <div>
+                <span>${isUp ? `➔ ${tTask.targetDir.split('/').pop() || '根目录'}` : `➔ 桌面`}</span>
+                <span style="margin-left:6px;">${formatSizeJs(tTask.size)}</span>
+              </div>
+              <div style="display:flex; align-items:center; gap:6px;">
+                <span>${isDone ? (tTask.elapsed || '') : (tTask.speed || '')}</span>
+                ${isDone && tTask.localPath ? `<button class="btn-primary" onclick="revealInExplorer('${tTask.localPath.replace(/\\/g, '\\\\')}')" style="padding:1px 6px; font-size:10px;">${t('transfer_reveal')}</button>` : ''}
+                ${isDone && isUp ? `<button onclick="locateInPhone('${tTask.targetDir}', '${tTask.name}')" style="padding:1px 6px; font-size:10px;">${t('transfer_locate')}</button>` : ''}
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateTaskUi(task) {
+      const el = document.getElementById(task.id);
+      if (!el) {
+        renderTransferHub();
+        return;
+      }
+      const isDone = task.status === 'done';
+      const isErr = task.status === 'error';
+      const fill = el.querySelector('.transfer-progress-fill');
+      if (fill) {
+        fill.style.width = task.progress + '%';
+        if (isDone) fill.style.background = '#10b981';
+        if (isErr) fill.style.background = '#ef4444';
+      }
+      renderTransferHub();
+    }
+
+    // 1. Add Upload Task
+    function addUploadTask(file, targetDir) {
+      const taskId = 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+      const task = {
+        id: taskId,
+        type: 'upload',
+        name: file.name,
+        size: file.size,
+        targetDir: targetDir,
+        progress: 0,
+        speed: '0 KB/s',
+        status: 'uploading',
+        startTime: Date.now(),
+        bytesLoaded: 0
+      };
+      transferTasks.unshift(task);
+      renderTransferHub();
+      openTransferDock();
+
+      const xhr = new XMLHttpRequest();
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('target_dir', targetDir);
+
+      let lastTime = Date.now();
+      let lastLoaded = 0;
+
+      xhr.upload.onprogress = (e) => {
+        if (e.lengthComputable) {
+          const now = Date.now();
+          const timeDiff = (now - lastTime) / 1000;
+          if (timeDiff >= 0.25) {
+            const loadedDiff = e.loaded - lastLoaded;
+            const bps = loadedDiff / timeDiff;
+            task.speed = formatSpeed(bps);
+            lastTime = now;
+            lastLoaded = e.loaded;
+          }
+          task.progress = Math.round((e.loaded / e.total) * 100);
+          task.bytesLoaded = e.loaded;
+          updateTaskUi(task);
+        }
+      };
+
+      xhr.onload = () => {
+        if (xhr.status >= 200 && xhr.status < 300) {
+          try {
+            const res = JSON.parse(xhr.responseText);
+            if (res.success) {
+              task.status = 'done';
+              task.progress = 100;
+              task.elapsed = ((Date.now() - task.startTime) / 1000).toFixed(1) + 's';
+              updateTaskUi(task);
+              showToast(t('toast_uploaded_item', {name: file.name}));
+              if (currentPath === targetDir) {
+                loadDirectory(currentPath);
+              }
+              return;
+            }
+          } catch (err) {}
+        }
+        task.status = 'error';
+        updateTaskUi(task);
+        showToast(t('toast_upload_fail') + ': ' + file.name, true);
+      };
+
+      xhr.onerror = () => {
+        task.status = 'error';
+        updateTaskUi(task);
+        showToast(t('toast_upload_fail') + ': ' + file.name, true);
+      };
+
+      xhr.open('POST', '/api/fs/upload');
+      xhr.send(fd);
+    }
+
+    function handleMultipleFiles(files, targetDir) {
+      if (!files || !files.length) return;
+      const list = Array.from(files);
+      showToast(t('toast_batch_uploading_queue', {n: list.length, dir: targetDir}));
+      list.forEach(file => {
+        addUploadTask(file, targetDir);
+      });
+    }
+
+    // 2. Download File (Phone -> PC via ADB directly to Desktop)
     async function downloadFile(remotePath) {
+      const fname = remotePath.split('/').pop();
+      const taskId = 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+      const task = {
+        id: taskId,
+        type: 'download',
+        name: fname,
+        size: 0,
+        targetDir: 'Desktop',
+        progress: 45,
+        speed: 'ADB Pipe',
+        status: 'pulling',
+        startTime: Date.now()
+      };
+      transferTasks.unshift(task);
+      renderTransferHub();
+      openTransferDock();
+
       showToast(t('toast_downloading'));
       try {
         const res = await fetch('/api/fs/pull', {
@@ -1024,9 +1364,249 @@
         });
         const d = await res.json();
         if (d.success) {
+          task.status = 'done';
+          task.progress = 100;
+          task.localPath = d.local_path;
+          task.elapsed = ((Date.now() - task.startTime) / 1000).toFixed(1) + 's';
+          updateTaskUi(task);
           showToast(t('toast_saved', {path: d.local_path}));
         } else {
+          task.status = 'error';
+          updateTaskUi(task);
           showToast(d.error || t('toast_download_fail'), true);
+        }
+      } catch (e) {
+        task.status = 'error';
+        updateTaskUi(task);
+        showToast(t('toast_network_err'), true);
+      }
+    }
+
+    // 3. Browser Direct Stream Download
+    function browserDownload(remotePath) {
+      const url = `/api/fs/download?path=${encodeURIComponent(remotePath)}`;
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = remotePath.split('/').pop();
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      showToast(`已发起浏览器下载: ${remotePath.split('/').pop()}`);
+    }
+
+    // 4. Reveal in Windows Explorer
+    async function revealInExplorer(localPath) {
+      try {
+        await fetch('/api/fs/reveal', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({path: localPath})
+        });
+        showToast('已在 Windows 资源管理器中高亮定位！');
+      } catch (e) {
+        showToast('唤起资源管理器失败', true);
+      }
+    }
+
+    // 5. Locate in Phone
+    function locateInPhone(targetDir, fname) {
+      navigatePath(targetDir);
+    }
+
+    // ==========================================
+    // 🖱️ 全域任意拖拽智能投递 HUD (DRAG & DROP HUD)
+    // ==========================================
+    let dragCounter = 0;
+    const dragOverlay = document.getElementById('dragOverlay');
+
+    window.addEventListener('dragenter', (e) => {
+      e.preventDefault();
+      dragCounter++;
+      if (e.dataTransfer && e.dataTransfer.types && (e.dataTransfer.types.includes('Files') || e.dataTransfer.types.includes('application/x-moz-file'))) {
+        dragOverlay.classList.add('active');
+        document.getElementById('dragCurrentPath').innerText = currentPath;
+      }
+    });
+
+    window.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      if (dragOverlay.classList.contains('active')) {
+        const dropZone = e.target.closest('.drop-zone-card');
+        document.querySelectorAll('.drop-zone-card').forEach(z => z.classList.remove('drag-highlight'));
+        if (dropZone) dropZone.classList.add('drag-highlight');
+      }
+    });
+
+    window.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      dragCounter--;
+      if (dragCounter <= 0) {
+        dragCounter = 0;
+        dragOverlay.classList.remove('active');
+        document.querySelectorAll('.drop-zone-card').forEach(z => z.classList.remove('drag-highlight'));
+      }
+    });
+
+    window.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dragCounter = 0;
+      dragOverlay.classList.remove('active');
+      document.querySelectorAll('.drop-zone-card').forEach(z => z.classList.remove('drag-highlight'));
+
+      const dropZone = e.target.closest('.drop-zone-card');
+      let targetDir = currentPath;
+      if (dropZone) {
+        const tVal = dropZone.dataset.target;
+        if (tVal && tVal !== 'current') targetDir = tVal;
+      }
+
+      if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length) {
+        handleMultipleFiles(e.dataTransfer.files, targetDir);
+      }
+    });
+
+    // ==========================================
+    // 📋 全局剪贴板极速秒传 (CTRL + V & CLIPBOARD)
+    // ==========================================
+    window.addEventListener('paste', async (e) => {
+      const tag = document.activeElement ? document.activeElement.tagName.toLowerCase() : '';
+      const isInput = tag === 'input' || tag === 'textarea';
+
+      const items = e.clipboardData ? e.clipboardData.items : null;
+      if (!items || !items.length) return;
+
+      let fileHandled = false;
+      for (let i = 0; i < items.length; i++) {
+        const item = items[i];
+        if (item.kind === 'file') {
+          const blob = item.getAsFile();
+          if (blob) {
+            fileHandled = true;
+            let fname = blob.name;
+            if (!fname || fname === 'image.png') {
+              const now = new Date();
+              const pad = (n) => String(n).padStart(2, '0');
+              const ts = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+              fname = `Snip_${ts}.png`;
+            }
+            const fileObj = new File([blob], fname, {type: blob.type});
+            showToast(t('toast_clipboard_detected', {name: fname}));
+            addUploadTask(fileObj, currentPath);
+          }
+        }
+      }
+
+      if (fileHandled) {
+        e.preventDefault();
+      }
+    });
+
+    async function pasteFromClipboard() {
+      try {
+        const items = await navigator.clipboard.read();
+        let pasted = false;
+        for (const item of items) {
+          for (const type of item.types) {
+            if (type.startsWith('image/')) {
+              const blob = await item.getType(type);
+              const now = new Date();
+              const pad = (n) => String(n).padStart(2, '0');
+              const ts = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}_${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+              const fname = `Snip_${ts}.png`;
+              const fileObj = new File([blob], fname, {type});
+              showToast(t('toast_clipboard_detected', {name: fname}));
+              addUploadTask(fileObj, currentPath);
+              pasted = true;
+              break;
+            }
+          }
+          if (pasted) break;
+        }
+        if (!pasted) {
+          const text = await navigator.clipboard.readText();
+          if (text) {
+            document.getElementById('clipText').value = text;
+            showToast(t('toast_clip_text_filled'));
+          } else {
+            showToast(t('toast_clip_empty'), true);
+          }
+        }
+      } catch (err) {
+        showToast(t('toast_clip_perm_hint'));
+      }
+    }
+
+    // ==========================================
+    // 批量操作 (BATCH OPERATIONS)
+    // ==========================================
+    async function batchDownload() {
+      const chks = Array.from(document.querySelectorAll('.file-chk:checked'));
+      if (!chks.length) return;
+      const paths = chks.map(c => c.dataset.path);
+      showToast(t('toast_batch_downloading', {n: paths.length}));
+
+      const taskId = 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+      const task = {
+        id: taskId,
+        type: 'download',
+        name: `批量文件 (${paths.length} 项)`,
+        size: 0,
+        targetDir: 'Desktop',
+        progress: 50,
+        speed: 'ADB Pipe',
+        status: 'pulling',
+        startTime: Date.now()
+      };
+      transferTasks.unshift(task);
+      renderTransferHub();
+      openTransferDock();
+
+      try {
+        const res = await fetch('/api/fs/batch-pull', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({paths})
+        });
+        const d = await res.json();
+        if (d.success) {
+          task.status = 'done';
+          task.progress = 100;
+          task.localPath = d.target_dir;
+          task.elapsed = ((Date.now() - task.startTime) / 1000).toFixed(1) + 's';
+          updateTaskUi(task);
+          showToast(t('toast_batch_download_success', {n: d.count}));
+          clearSelection();
+        } else {
+          task.status = 'error';
+          updateTaskUi(task);
+          showToast(t('toast_batch_download_fail'), true);
+        }
+      } catch (e) {
+        task.status = 'error';
+        updateTaskUi(task);
+        showToast(t('toast_network_err'), true);
+      }
+    }
+
+    async function batchDelete() {
+      const chks = Array.from(document.querySelectorAll('.file-chk:checked'));
+      if (!chks.length) return;
+      const paths = chks.map(c => c.dataset.path);
+      if (!confirm(t('toast_batch_delete_confirm', {n: paths.length}))) return;
+      showToast(t('toast_batch_deleting', {n: paths.length}));
+      try {
+        const res = await fetch('/api/fs/batch-delete', {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({paths})
+        });
+        const d = await res.json();
+        if (d.success) {
+          showToast(t('toast_batch_delete_success', {n: d.count}));
+          clearSelection();
+          loadDirectory(currentPath);
+        } else {
+          showToast(t('toast_batch_delete_fail'), true);
         }
       } catch (e) {
         showToast(t('toast_network_err'), true);
@@ -1099,38 +1679,6 @@
       }
     }
 
-    // Drag and Drop & Upload
-    const dropBanner = document.getElementById('dropBanner');
-    dropBanner.addEventListener('dragover', (e) => { e.preventDefault(); dropBanner.classList.add('dragover'); });
-    dropBanner.addEventListener('dragleave', () => dropBanner.classList.remove('dragover'));
-    dropBanner.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropBanner.classList.remove('dragover');
-      if (e.dataTransfer.files.length) {
-        uploadSingleFile(e.dataTransfer.files[0]);
-      }
-    });
-
-    async function uploadSingleFile(file) {
-      if (!file) return;
-      showToast(t('toast_uploading', {dir: currentPath, name: file.name}));
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('target_dir', currentPath);
-      try {
-        const res = await fetch('/api/fs/upload', {method: 'POST', body: fd});
-        const d = await res.json();
-        if (d.success) {
-          showToast(t('toast_uploaded'));
-          loadDirectory(currentPath);
-        } else {
-          showToast(t('toast_upload_fail'), true);
-        }
-      } catch (e) {
-        showToast(t('toast_network_err'), true);
-      }
-    }
-
     async function pullLatestPhoto() {
       showToast(t('toast_pulling_photo'));
       try {
@@ -1138,6 +1686,21 @@
         const d = await res.json();
         if (d.success) {
           showToast(t('toast_photo_saved', {path: d.local_path}));
+          const taskId = 'task_' + Date.now() + '_' + Math.random().toString(36).substr(2, 5);
+          transferTasks.unshift({
+            id: taskId,
+            type: 'download',
+            name: d.local_path.split('\\').pop(),
+            size: 0,
+            targetDir: 'Desktop',
+            progress: 100,
+            speed: 'ADB Pipe',
+            status: 'done',
+            localPath: d.local_path,
+            elapsed: '0.4s'
+          });
+          renderTransferHub();
+          openTransferDock();
         } else {
           showToast(d.error || t('toast_photo_not_found'), true);
         }

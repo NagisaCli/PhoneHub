@@ -39,7 +39,16 @@ Built entirely on the high-speed Android **ADB data pipeline**, PhoneHub require
 
 ---
 
-### 🖥️ 2. Native Hardware-Accelerated Screen Mirroring
+### ⚡ 2. Silky-Smooth File Transfer Hub
+- **🚀 Full-Window Smart Drag HUD**: Drag single or multiple files from anywhere on PC into the browser window to instantly activate a sleek glassmorphic HUD. Target drop cards let you send straight to "Current Folder", "Downloads (/sdcard/Download)", or "Camera (/sdcard/DCIM/Camera)" with automated multi-task queuing.
+- **📋 Global Clipboard Instant Paste (`Ctrl + V`)**: Press `Ctrl + V` anywhere on the page to instantly detect and transfer clipboard screenshots (`Win + Shift + S`) or copied files to the active phone directory with zero redundant clicks.
+- **📊 Floating Transfer Dock**: Sleek floating drawer at the bottom-right corner displaying active transfer queues, direction indicators (⬆️ PC to Phone / ⬇️ Phone to PC), live neon progress bars, real-time speeds (MB/s), and elapsed times.
+- **📂 Reveal in Windows Explorer**: After pulling files to PC, click **"Show in Explorer"** in the transfer card to automatically highlight the downloaded file in native Windows File Explorer via `explorer.exe /select`!
+- **🌐 Dual-Mode Download Engine**: Choose between instant millisecond ADB desktop save (`⬇️ Desktop`) or native browser HTTP stream download (`🌐 Browser DL`).
+
+---
+
+### 🖥️ 3. Native Hardware-Accelerated Screen Mirroring
 - **🚀 144Hz Geek High-Refresh Mode**:
   - Custom-tuned for high-refresh devices (e.g., Redmi Note 11T Pro with Dimensity 8100 & 144Hz LCD).
   - Flags: `--max-fps=144 --video-codec=h264 -b 20M --keyboard=uhid --mouse=uhid`.
@@ -51,7 +60,7 @@ Built entirely on the high-speed Android **ADB data pipeline**, PhoneHub require
 
 ---
 
-### 💬 3. SMS & 2FA Verification Code Hub
+### 💬 4. SMS & 2FA Verification Code Hub
 - **Real-Time SMS Inbox**: View sender, timestamp, and message body.
 - **Smart 2FA Code Parsing**: Automatically extracts 4~8 digit verification codes with a **`🔑 Copy Code`** button for instant copy to the Windows clipboard.
 - **Background Notification Sync**: Dedicated background sync daemon pushes newly received SMS codes straight to the Windows clipboard and pops up native Windows toast alerts.
@@ -59,20 +68,21 @@ Built entirely on the high-speed Android **ADB data pipeline**, PhoneHub require
 
 ---
 
-### ⚡ 4. Cross-Device Text Injection & Clipboard Sync
+### ⚡ 5. Cross-Device Text Injection & Clipboard Sync
 - One-click inject PC clipboard text, URLs, or code snippets directly into the active Android text field (`📋 PC Clipboard`).
 - Inline text field to inject any custom text into the phone by pressing Enter.
 
 ---
 
-### 🧹 5. Deep System Cleanup & Performance Booster
+### 🧹 6. Deep System Cleanup & Performance Booster
 - **⚡ Trim Caches (1000G)**: Triggers Android `pm trim-caches 1000G` to aggressively purge accumulated application caches.
 - **🛑 Kill Background Apps**: Invokes `am kill-all` to reclaim resident memory.
 - **🚫 Disable Bloatware & Ads**: Root-free ADB deactivation of tracking, pre-installed adware (`msa`), and quick app services.
 
 ---
 
-### 🌐 6. Native Bilingual Support (中文 / English)
+### 🌐 7. Native Bilingual Support (中文 / English)
+
 - Integrated full-stack bilingual language toggle button (`🌐 English` / `🌐 简体中文`) in the top navigation bar.
 - Instant, persistent language switching across all menus, tooltips, buttons, modals, and system alerts.
 
