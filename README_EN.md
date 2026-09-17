@@ -64,28 +64,20 @@ Built entirely on the high-speed Android **ADB data pipeline**, PhoneHub require
 
 ---
 
-### 💬 4. SMS & 2FA Verification Code Hub
-- **Real-Time SMS Inbox**: View sender, timestamp, and message body.
-- **Smart 2FA Code Parsing**: Automatically extracts 4~8 digit verification codes with a **`🔑 Copy Code`** button for instant copy to the Windows clipboard.
-- **Background Notification Sync**: Dedicated background sync daemon pushes newly received SMS codes straight to the Windows clipboard and pops up native Windows toast alerts.
-- **PC SMS Dispatch**: Compose and send SMS directly from PC through the phone's cellular baseband.
-
----
-
-### ⚡ 5. Cross-Device Text Injection & Clipboard Sync
+### ⚡ 4. Cross-Device Text Injection & Clipboard Sync
 - One-click inject PC clipboard text, URLs, or code snippets directly into the active Android text field (`📋 PC Clipboard`).
 - Inline text field to inject any custom text into the phone by pressing Enter.
 
 ---
 
-### 🧹 6. Deep System Cleanup & Performance Booster
+### 🧹 5. Deep System Cleanup & Performance Booster
 - **⚡ Trim Caches (1000G)**: Triggers Android `pm trim-caches 1000G` to aggressively purge accumulated application caches.
 - **🛑 Kill Background Apps**: Invokes `am kill-all` to reclaim resident memory.
 - **🚫 Disable Bloatware & Ads**: Root-free ADB deactivation of tracking, pre-installed adware (`msa`), and quick app services.
 
 ---
 
-### 🌐 7. Native Bilingual Support (中文 / English)
+### 🌐 6. Native Bilingual Support (中文 / English)
 
 - Integrated full-stack bilingual language toggle button (`🌐 English` / `🌐 简体中文`) in the top navigation bar.
 - Instant, persistent language switching across all menus, tooltips, buttons, modals, and system alerts.

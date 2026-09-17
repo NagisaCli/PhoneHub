@@ -163,19 +163,8 @@
     .file-title { font-weight: 500; color: #e2e8f0; transition: color 0.15s; }
     .file-icon { font-size: 16px; width: 20px; text-align: center; }
 
-    /* Bottom Columns: SMS & Tools */
-    .bottom-grid { display: grid; grid-template-columns: 1.2fr 1fr; gap: 14px; }
-    @media (max-width: 960px) { .bottom-grid { grid-template-columns: 1fr; } }
-
-    /* SMS List */
-    .sms-box {
-      max-height: 200px; overflow-y: auto; display: flex; flex-direction: column; gap: 7px;
-      border: 1px solid var(--card-border); border-radius: 8px; padding: 9px; background: #0a0f1c;
-    }
-    .sms-row {
-      background: rgba(255, 255, 255, 0.02); border: 1px solid rgba(255, 255, 255, 0.05);
-      border-radius: 7px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; font-size: 12px;
-    }
+    /* Bottom Utility: Tools & Maintenance */
+    .bottom-grid { display: block; }
 
     /* Modal Image Lightbox & Share Modal */
     .modal-overlay {
@@ -460,28 +449,8 @@
       </div>
     </div>
 
-    <!-- Bottom Utility Grid: SMS/2FA Center & Essential Tools -->
+    <!-- Bottom Utility: Essential Tools & System Maintenance -->
     <div class="bottom-grid">
-      <!-- SMS & 2FA -->
-      <div class="section-card">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <div class="section-title">
-            <span data-i18n="sms_title">💬 短信与 2FA 验证码中心</span>
-            <span data-i18n="sms_badge" style="font-size: 11px; font-weight: normal; color: #34d399; background: rgba(16, 185, 129, 0.15); padding: 1px 7px; border-radius: 8px;">🔑 自动推送剪贴板</span>
-          </div>
-          <button onclick="loadSms()" data-i18n="btn_refresh_sms" style="padding:4px 9px; font-size:11px;">🔄 刷新短信</button>
-        </div>
-        <div class="sms-box" id="smsBox">
-          <div style="text-align:center; color:var(--text-muted); padding:15px;" data-i18n="sms_loading">正在同步短信...</div>
-        </div>
-        <!-- Quick SMS Send -->
-        <div style="display:flex; gap:6px;">
-          <input type="text" id="smsNum" data-i18n-ph="sms_num_placeholder" placeholder="发件号码 (如 10010)..." style="width: 160px;">
-          <input type="text" id="smsText" data-i18n-ph="sms_body_placeholder" placeholder="短信内容，回车发送..." style="flex:1;" onkeydown="if(event.key==='Enter') sendSmsMsg()">
-          <button class="btn-primary" onclick="sendSmsMsg()" data-i18n="btn_send_sms">发送 ➔</button>
-        </div>
-      </div>
-
       <!-- Essential Utilities: Clipboard & Deep Clean -->
       <div class="section-card">
         <div class="section-title" data-i18n="tools_title">⚡ 跨屏文字速传 &amp; 系统维护</div>
@@ -492,7 +461,7 @@
           <button class="btn-special" onclick="syncClipboardToPhone()" data-i18n="btn_pc_clip" data-i18n-title="btn_pc_clip_title" title="将电脑剪贴板中的内容直接传给手机">📋 电脑剪贴板</button>
         </div>
         <!-- Deep clean -->
-        <div style="display:flex; flex-direction:column; gap:6px; margin-top:4px;">
+        <div style="display:flex; flex-direction:column; gap:6px; margin-top:8px;">
           <div style="font-size: 11px; color: var(--text-muted);" data-i18n="clean_section_title">手机深度瘦身与性能释放：</div>
           <div class="btn-group">
             <button class="btn-primary" onclick="cleanOp('trim_caches')" data-i18n="btn_trim_caches">⚡ 释放系统级缓存 (Trim Caches 1000G)</button>
@@ -690,17 +659,6 @@
         transfer_reveal: "📂 电脑中查看",
         transfer_locate: "📱 手机中定位",
 
-        // SMS & 2FA
-        sms_title: "💬 短信与 2FA 验证码中心",
-        sms_badge: "🔑 自动推送剪贴板",
-        btn_refresh_sms: "🔄 刷新短信",
-        sms_loading: "正在同步短信...",
-        sms_empty: "暂无短信记录",
-        sms_num_placeholder: "发件号码 (如 10010)...",
-        sms_body_placeholder: "短信内容，回车发送...",
-        btn_send_sms: "发送 ➔",
-        btn_copy_code: "🔑 复制验证码",
-
         // Tools
         tools_title: "⚡ 跨屏文字速传 & 系统维护",
         clip_placeholder: "输入长文本/链接，按回车直接注入手机当前光标...",
@@ -757,11 +715,6 @@
         toast_photo_not_found: "未找到相片",
         toast_loading_preview: "正在加载高清图片预览...",
         toast_preview_fail: "图片预览失败",
-        toast_code_copied: "验证码 [{code}] 已复制到 Windows 剪贴板！",
-        toast_sms_need_info: "请输入号码与内容",
-        toast_sms_sending: "正在发送短信至 {number}...",
-        toast_sms_sent: "短信已拉起发出！",
-        toast_sms_fail: "发送失败",
         toast_text_injected: "文字已注入到手机！",
         toast_text_fail: "注入失败",
         toast_pc_clip_empty: "电脑剪贴板为空",
@@ -873,17 +826,6 @@
         transfer_reveal: "📂 Show in Explorer",
         transfer_locate: "📱 Locate in Phone",
 
-        // SMS & 2FA
-        sms_title: "💬 SMS & 2FA Code Center",
-        sms_badge: "🔑 Auto-sync to Clipboard",
-        btn_refresh_sms: "🔄 Refresh SMS",
-        sms_loading: "Syncing SMS messages...",
-        sms_empty: "No SMS messages found",
-        sms_num_placeholder: "Recipient number...",
-        sms_body_placeholder: "Message text, Enter to send...",
-        btn_send_sms: "Send ➔",
-        btn_copy_code: "🔑 Copy Code",
-
         // Tools
         tools_title: "⚡ Cross-Screen Text & Maintenance",
         clip_placeholder: "Enter text/URL, press Enter to inject into phone...",
@@ -940,11 +882,6 @@
         toast_photo_not_found: "Photo not found",
         toast_loading_preview: "Loading image preview...",
         toast_preview_fail: "Failed to preview image",
-        toast_code_copied: "Code [{code}] copied to Windows clipboard!",
-        toast_sms_need_info: "Please enter phone number and message",
-        toast_sms_sending: "Sending SMS to {number}...",
-        toast_sms_sent: "SMS dispatched!",
-        toast_sms_fail: "Failed to send SMS",
         toast_text_injected: "Text injected into phone!",
         toast_text_fail: "Injection failed",
         toast_pc_clip_empty: "PC clipboard is empty",
@@ -1877,68 +1814,6 @@
       document.getElementById('imgModal').classList.remove('active');
     }
 
-    // SMS & 2FA
-    async function loadSms() {
-      const box = document.getElementById('smsBox');
-      try {
-        const res = await fetch('/api/sms');
-        const d = await res.json();
-        const list = d.sms || [];
-        if (!list.length) {
-          box.innerHTML = `<div style="text-align:center; color:var(--text-muted); padding:15px;">${t('sms_empty')}</div>`;
-          return;
-        }
-        box.innerHTML = list.map(s => `
-          <div class="sms-row">
-            <div style="display:flex; justify-content:space-between; align-items:center;">
-              <strong style="color:#38bdf8;">${s.address}</strong>
-              <div style="display:flex; align-items:center; gap:6px;">
-                ${s.code ? `<button onclick="copyCode('${s.code}')" style="padding:2px 8px; font-size:11px; background:#059669; border:none; font-weight:600;">${t('btn_copy_code')} ${s.code}</button>` : ''}
-                <span style="color:var(--text-muted); font-size:11px;">${s.date}</span>
-              </div>
-            </div>
-            <div style="color:#e2e8f0; line-height:1.4;">${s.body}</div>
-          </div>
-        `).join('');
-      } catch (e) {
-        box.innerHTML = `<div style="text-align:center; color:#f87171; padding:15px;">${t('toast_network_err')}</div>`;
-      }
-    }
-
-    function copyCode(code) {
-      navigator.clipboard.writeText(code);
-      showToast(t('toast_code_copied', {code}));
-    }
-
-    async function sendSmsMsg() {
-      const numInput = document.getElementById('smsNum');
-      const bodyInput = document.getElementById('smsText');
-      const number = numInput.value.trim();
-      const body = bodyInput.value.trim();
-      if (!number || !body) {
-        showToast(t('toast_sms_need_info'), true);
-        return;
-      }
-      showToast(t('toast_sms_sending', {number}));
-      try {
-        const res = await fetch('/api/sms/send', {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({number, body})
-        });
-        const d = await res.json();
-        if (d.success) {
-          showToast(t('toast_sms_sent'));
-          bodyInput.value = '';
-          setTimeout(loadSms, 2000);
-        } else {
-          showToast(t('toast_sms_fail'), true);
-        }
-      } catch (e) {
-        showToast(t('toast_network_err'), true);
-      }
-    }
-
     // Clipboard & Inputs
     async function sendTextInput() {
       const input = document.getElementById('clipText');
@@ -2033,7 +1908,6 @@
     // Initial Load
     refreshStatus();
     loadDirectory('/sdcard/Download');
-    loadSms();
     setInterval(refreshStatus, 4000);
   </script>
 </body>
